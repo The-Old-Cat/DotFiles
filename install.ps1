@@ -25,20 +25,28 @@ if (-not (Get-Command nerd-fonts -ErrorAction SilentlyContinue)) {
     }
 }
 
-# --- 3. Создание симлинков с помощью PowerShell ---
-Write-Host "Проверка и установка oh-my-posh..."
-if (-not (Get-Command oh-my-posh -ErrorAction SilentlyContinue)) {
-    # Используем winget для установки, если доступен
-    if (Get-Command winget -ErrorAction SilentlyContinue) {
-        winget install JanDeDobbeleer.oh-my-posh -e --silent
-    } elseif (Get-Command scoop -ErrorAction SilentlyContinue) {
-        scoop install oh-my-posh
+# --- 3. Установка расширений VSCode ---
+
+Write-Host "Проверка и установка расширений VSCode для Python и PowerShell..."
+if (Get-Command code -ErrorAction SilentlyContinue) {
+    $ExtensionsJsonPath = Join-Path $RepoRoot "extensions_recommendations.json"
+    if (Test-Path $ExtensionsJsonPath) {
+        $ExtensionsData = Get-Content $ExtensionsJsonPath | ConvertFrom-Json
+        $PythonExtensions = $ExtensionsData.recommendations | Where-Object { $_ -like "ms-python.*" -or $_ -eq "ms-toolsai.jupyter" }
+        $PowerShellExtensions = $ExtensionsData.recommendations | Where-Object { $_ -like "ms-vscode.powershell" -or $_ -like "tylerleonhardt.*" }
+        $AllExtensions = $PythonExtensions + $PowerShellExtensions
+        foreach ($ext in $AllExtensions) {
+            Write-Host "Установка расширения: $ext"
+            code --install-extension $ext --force
+        }
     } else {
-        Write-Warning "Не удалось найти winget или scoop. Пожалуйста, установите oh-my-posh вручную."
+        Write-Warning "Файл extensions_recommendations.json не найден."
     }
+} else {
+    Write-Warning "VSCode не установлен. Пропуск установки расширений."
 }
 
-# --- 2. Создание симлинков с помощью PowerShell ---
+# --- 4. Создание симлинков с помощью PowerShell ---
 # Предполагается, что репозиторий будет перемещен в $HOME/dotfiles,
 # и скрипт будет запущен из $HOME/dotfiles/install.ps1.
 
@@ -56,17 +64,17 @@ if (-not (Test-Path $PoshConfigDir)) {
     # Для zen.toml, если oh-my-posh установлен, он обычно ищет в $HOME\AppData\Local\Programs\oh-my-posh\themes
     # или в каталоге, указанном в $env:POSH_THEMES.
     # Для простоты, я буду создавать симлинк на $HOME\Documents\PowerShell, как указано в start.ps1.
-    
+
     # Создаем целевой каталог для zen.toml, если он не существует
     $TargetPoshThemeDir = Join-Path $HOME "Documents\PowerShell\oh-my-posh-themes"
     if (-not (Test-Path $TargetPoshThemeDir)) {
         New-Item -ItemType Directory -Force -Path $TargetPoshThemeDir | Out-Null
     }
-    
+
     # Симлинк для zen.toml
     $SourceZenToml = Join-Path $RepoRoot "common\config\oh-my-posh\zen.toml"
     $TargetZenToml = Join-Path $TargetPoshThemeDir "zen.toml"
-    
+
     # Проверяем, существует ли исходный файл (он должен быть создан start.ps1 или README.md)
     if (Test-Path $SourceZenToml) {
         # Удаляем старый файл/симлинк, если он есть, и создаем новый симлинк

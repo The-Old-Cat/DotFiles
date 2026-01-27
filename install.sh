@@ -15,13 +15,13 @@ install_packages() {
   # Примечание: имена пакетов могут отличаться в дистрибутивах.
   if require_cmd apt; then
     sudo apt update
-    sudo apt install -y zsh git curl unzip fontconfig stow
+    sudo apt install -y zsh git curl unzip fontconfig stow jq
   elif require_cmd dnf; then
-    sudo dnf install -y zsh git curl unzip fontconfig stow
+    sudo dnf install -y zsh git curl unzip fontconfig stow jq
   elif require_cmd pacman; then
-    sudo pacman -Syu --noconfirm zsh git curl unzip fontconfig stow
+    sudo pacman -Syu --noconfirm zsh git curl unzip fontconfig stow jq
   else
-    log "Не найден пакетный менеджер (apt/dnf/pacman). Установите вручную: zsh, git, curl, fontconfig, stow."
+    log "Не найден пакетный менеджер (apt/dnf/pacman). Установите вручную: zsh, git, curl, fontconfig, stow, jq."
     exit 1
   fi
 }
@@ -80,6 +80,28 @@ install_meslo_nerd_font() {
   fc-cache -fv
 }
 
+install_vscode_extensions() {
+  if ! require_cmd code; then
+    log "VSCode не установлен. Пропуск установки расширений."
+    return
+  fi
+
+  local json_file="$DOTFILES_DIR/../extensions_recommendations.json"
+  if [[ ! -f "$json_file" ]]; then
+    log "Файл extensions_recommendations.json не найден."
+    return
+  fi
+
+  log "Установка расширений VSCode для Python и PowerShell..."
+  # Фильтруем расширения для Python и PowerShell
+  local extensions
+  extensions=$(jq -r '.recommendations[] | select(startswith("ms-python") or startswith("ms-toolsai") or startswith("ms-vscode.powershell") or startswith("tylerleonhardt"))' "$json_file")
+  for ext in $extensions; do
+    log "Установка расширения: $ext"
+    code --install-extension "$ext" --force
+  done
+}
+
 backup_if_regular_file() {
   local target="$1"
   if [[ -e "$target" && ! -L "$target" ]]; then
@@ -115,6 +137,7 @@ main() {
   install_omz_plugin zsh-syntax-highlighting https://github.com/zsh-users/zsh-syntax-highlighting
 
   install_meslo_nerd_font
+  install_vscode_extensions
 
   # Пробрасываем конфиги из репозитория
   link_file "$DOTFILES_DIR/linux/.zshrc" "$HOME/.zshrc"
