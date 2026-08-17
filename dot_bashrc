@@ -1,0 +1,98 @@
+# ~/.bashrc - Universal Config for Lior
+
+# === Защита от неинтерактивных сессий ===
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+parse_git_branch() {
+    git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+}
+
+# === История ===
+export HISTCONTROL=ignoreboth:erasedups
+export HISTSIZE=50000
+export HISTFILESIZE=100000
+shopt -s histappend
+
+
+# === True Color Palette ===
+C_RESET='\[\033[0m\]'
+C_ORANGE='\[\033[38;2;255;165;0m\]'   # Pop!_OS Orange / Accent
+C_BLUE='\[\033[38;2;135;206;235m\]'   # Sky Blue (Paths)
+C_GREEN='\[\033[38;2;138;229;138m\]'  # Soft Green (User)
+C_RED='\[\033[38;2;255;85;85m\]'      # Soft Red (Root)
+C_YELLOW='\[\033[38;2;241;250;140m\]' # Pastel Yellow (Frames/Git)
+C_CYAN='\[\033[38;2;139;233;253m\]'   # Light Cyan (IPs)
+C_GRAY='\[\033[38;2;100;114;164m\]'   # Comment Gray
+
+# === Функции ===
+get_local_ip() { hostname -I 2>/dev/null | awk '{print $1}' || echo "n/a"; }
+
+cached_external_ip() {
+    local cache_file="$HOME/.cache/external_ip"
+    mkdir -p "$HOME/.cache"
+    if [ -f "$cache_file" ] && [ $(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0))) -lt 300 ]; then
+        cat "$cache_file"
+    else
+        curl -s --max-time 2 http://ipecho.net/plain > "$cache_file" 2>/dev/null
+        cat "$cache_file"
+    fi
+}
+
+# === Баннер при входе ===
+print_banner() {
+    local user=$USER
+    local ext_ip=$(cached_external_ip)
+    local loc_ip=$(get_local_ip)
+
+    echo -e ""
+    echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+    echo -e "   💻 Приветствую тебя, ${user},"
+    echo -e "    на борту $(hostname)!"
+    echo -e "   🌐 Внешний IP: ${ext_ip}"
+    echo -e "   🏠 Локальный IP: ${loc_ip}"
+    echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+    echo -e ""
+}
+# Запуск баннера только если это интерактивная сессия и не tmux
+if [[ $- == *i* ]] && [ -z "$TMUX" ]; then
+    print_banner
+fi
+
+
+# === Определение цвета пользователя ===
+if [ "$USER" = "root" ]; then
+    USER_COLOR=$C_RED
+    SYMBOL='#'
+else
+    USER_COLOR=$C_GREEN
+    SYMBOL='$'
+fi
+
+# === Двухстрочный PS1 с рамками и True Color ===
+# Строка 1: IP-адреса (Сверху, как заголовок)
+# Строка 2: Рамка с хостом, временем и путем
+# Строка 3: Символ промпта
+
+PS1="\n🏠${C_CYAN} Local IP: \$(get_local_ip) ${C_GRAY}| 🌐${C_CYAN} External IP: \$(cached_external_ip)${C_RESET}\n"
+PS1+="${C_YELLOW}┌──(${C_RESET}${USER_COLOR}\h${C_YELLOW})──[TIME: \t${C_YELLOW}]──${C_RESET}${C_BLUE}[\w]${C_YELLOW}\$(parse_git_branch)${C_RESET}\n"
+PS1+="${C_YELLOW}│\n└─${USER_COLOR}{\u}${C_YELLOW}──>${C_RESET}${USER_COLOR}${SYMBOL}${C_RESET} "
+
+
+# === Алиасы (Универсальные) ===
+alias ll='ls -alFh --color=auto'
+alias la='ls -A --color=auto'
+alias grep='grep --color=auto'
+alias df='df -h'
+alias du='du -h --max-depth=1'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias myip='echo "Ext: $(get_cached_ext_ip) | Loc: $(get_local_ip)"'
+
+export PATH="$HOME/.local/bin:$PATH"
+export TERM=xterm-256color
+export COLORTERM=truecolor
+export EDITOR=hx
+export VISUAL=hx
