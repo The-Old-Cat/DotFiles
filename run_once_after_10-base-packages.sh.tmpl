@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# run_once_after_10-base-packages.sh.tmpl
+# Условная установка базовых пакетов: Linux (Ubuntu/Debian) / Windows (winget)
+set -euo pipefail
+
+{{- if eq .chezmoi.os "linux" }}
+
+echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
+
+# --- Ubuntu/Debian: базовые пакеты ---
+if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
+    # --- GitHub CLI: apt-репозиторий (только если gh ещё нет) ---
+    if ! command -v gh >/dev/null 2>&1; then
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+            | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    fi
+
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends \
+        git curl wget htop jq age restic gh
+
+    {{- if eq .chezmoi.hostname "ADM00-01IT" }}
+    # WSL-хост: docker
+    sudo apt-get install -y --no-install-recommends \
+        docker.io docker-compose-v2
+    {{- end }}
+
+    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
+    # Proxmox-хосты
+    sudo apt-get install -y --no-install-recommends \
+        pve-manager-tools
+    {{- end }}
+else
+    echo "Unsupported Linux distro" >&2
+    exit 1
+fi
+
+{{- else if eq .chezmoi.os "windows" }}
+
+echo "OS: Windows | Hostname: {{ .chezmoi.hostname }}"
+
+# --- Windows: winget ---
+PACKAGES=(
+    "Git.Git"
+    "GitHub.cli"
+    "sharkdp.fd"
+    "BurntSushi.ripgrep.MSVC"
+    "Junegunn.fzf"
+)
+
+for pkg in "${PACKAGES[@]}"; do
+    winget install --id "$pkg" --accept-source-agreements --accept-package-agreements || true
+done
+
+{{- else }}
+
+echo "Unsupported OS: {{ .chezmoi.os }}" >&2
+exit 1
+
+{{- end }}
