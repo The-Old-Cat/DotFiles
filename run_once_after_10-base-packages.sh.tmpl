@@ -45,7 +45,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         mkdir -p ~/.local/share/fonts/hasklig
         curl -fLo /tmp/Hasklig.zip \
             https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
-        unzip -q /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
+        unzip -qo /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
         rm -f /tmp/Hasklig.zip
         fc-cache -f ~/.local/share/fonts >/dev/null
         echo "✓ Hasklug Nerd Font installed"
