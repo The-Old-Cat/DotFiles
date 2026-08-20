@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop..."
-    $packages = @("git", "gh", "fd", "ripgrep", "fzf")
+    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "age", "restic")
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
