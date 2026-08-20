@@ -2,7 +2,9 @@ README.md
 docs/**
 {{- if eq .chezmoi.os "windows" }}
 run_once_after_10-base-packages.sh
+10-base-packages.sh
 {{- end }}
 {{- if eq .chezmoi.os "linux" }}
 run_once_after_20-windows-packages.ps1
+20-windows-packages.ps1
 {{- end }}
