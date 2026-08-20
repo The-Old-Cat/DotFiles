@@ -23,14 +23,45 @@ dotfiles/
 
 ## 🚀 Быстрый старт
 
-### Установка Chezmoi
+## Установка Chezmoi Linux
 
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
+## Windows (без winget)
 
+### 1. Scoop
+
+```powershell
+# Разрешить скрипты (один раз на юзера)
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+
+# Установить scoop
+iwr -useb get.scoop.sh | iex
+
+# Валидация
+scoop --version
+scoop help
+```
+
+### 2. Пакеты и шрифты
+
+```powershell
+# Установка
+scoop install chezmoi
+scoop install git gh vscode
+scoop bucket add nerd-fonts
+scoop install Hasklig-NF
+```
+
+### 3. Инициализация (Git Bash)
+
+```bash
+chezmoi init --apply The-Old-Cat
+gh auth login
+```
 ### Применение конфигурации
 
 ```bash
