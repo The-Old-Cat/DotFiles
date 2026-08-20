@@ -23,7 +23,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     echo "Installing base packages..."
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends \
-        git curl wget htop jq age restic gh unzip fontconfig
+        git curl wget htop jq age restic gh unzip tmux fontconfig
 
     {{- if eq .chezmoi.hostname "ADM00-01IT" }}
     # WSL-хост: Docker
