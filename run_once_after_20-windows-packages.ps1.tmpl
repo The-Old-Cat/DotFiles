@@ -1,0 +1,10 @@
+{{- if eq .chezmoi.os "windows" }}
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    scoop install git gh fd ripgrep fzf
+    scoop bucket add nerd-fonts 2>$null | Out-Null
+    scoop install Hasklig-NF
+    Write-Host "Windows packages installed"
+} else {
+    Write-Warning "scoop not found: iwr -useb get.scoop.sh | iex"
+}
+{{- end }}
