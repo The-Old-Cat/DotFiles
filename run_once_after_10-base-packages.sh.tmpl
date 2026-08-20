@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run_once_after_10-base-packages.sh.tmpl
-# Условная установка пакетов и шрифтов: Linux (Ubuntu/Debian) / Windows (winget→scoop→manual)
+# Условная установка пакетов и шрифтов: Linux only (Windows — отдельный .ps1.tmpl)
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
@@ -51,66 +51,15 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "✓ Hasklug Nerd Font installed"
     fi
 
+    echo "✓ Linux run-once completed"
+
 else
     echo "ERROR: Unsupported Linux distro" >&2
     exit 1
 fi
 
-{{- else if eq .chezmoi.os "windows" }}
-
-echo "OS: Windows | Hostname: {{ .chezmoi.hostname }}"
-
-# --- Windows: каскад winget → scoop → manual ---
-if command -v winget >/dev/null 2>&1; then
-    echo "Using winget..."
-    PACKAGES=(
-        "Git.Git"
-        "GitHub.cli"
-        "sharkdp.fd"
-        "BurntSushi.ripgrep.MSVC"
-        "Junegunn.fzf"
-        "NerdFonts.Hasklig"
-    )
-    for pkg in "${PACKAGES[@]}"; do
-        echo "Installing $pkg..."
-        winget install --id "$pkg" --silent \
-            --accept-source-agreements --accept-package-agreements \
-            || echo "WARN: failed to install $pkg"
-    done
-
-elif command -v scoop >/dev/null 2>&1; then
-    echo "Using scoop..."
-    PACKAGES=(git gh fd ripgrep fzf)
-    for pkg in "${PACKAGES[@]}"; do
-        echo "Installing $pkg..."
-        scoop install "$pkg" || echo "WARN: failed to install $pkg"
-    done
-
-    # Шрифты через scoop nerd-fonts bucket
-    echo "Installing Hasklug Nerd Font via scoop..."
-    scoop bucket add nerd-fonts 2>/dev/null || true
-    scoop install Hasklig-NF || echo "WARN: Hasklig-NF not installed via scoop"
-
-else
-    echo "WARN: Neither winget nor scoop found."
-    echo ""
-    echo "To bootstrap scoop (PowerShell, можно PS7):"
-    echo "  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force"
-    echo "  iwr -useb get.scoop.sh | iex"
-    echo ""
-    echo "Then re-run: chezmoi apply"
-    echo ""
-    echo "Or install manually:"
-    echo "  - Git:        https://git-scm.com/download/win"
-    echo "  - GitHub CLI: https://cli.github.com/"
-    echo "  - Hasklug NF: fonts.ps1 or папка Hasklig на Яндекс.Диске"
-fi
-
 {{- else }}
 
-echo "ERROR: Unsupported OS: {{ .chezmoi.os }}" >&2
-exit 1
+echo "Skipped: script is Linux-only, current OS is {{ .chezmoi.os }}"
 
 {{- end }}
-
-echo "✓ Run-once script completed"
