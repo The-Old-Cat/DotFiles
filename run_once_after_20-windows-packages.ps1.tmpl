@@ -1,6 +1,7 @@
 # run_once_after_20-windows-packages.ps1.tmpl — Windows only
 {{- if eq .chezmoi.os "windows" }}
-
+$Host.UI.RawUI.WindowTitle = "Installing packages..."
+Write-Host "Starting installation..." -ForegroundColor Green
 $ErrorActionPreference = "Stop"
 
 # --- Функция для установки age через scoop (более простой и поддерживаемый способ) ---
