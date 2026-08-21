@@ -92,12 +92,6 @@ bindings = [
     { mouse = "Middle", action = "PasteSelection" }
 ]
 
-{{- if eq .chezmoi.os "windows" }}
-[terminal.shell]
-program = "pwsh"
-args = ["-NoLogo"]
-{{- end }}
-
 [[keyboard.bindings]]
 key = "C"
 mods = "Control"
