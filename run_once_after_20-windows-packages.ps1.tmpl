@@ -30,51 +30,6 @@ function Install-Age {
 }
 Install-Age
 
-# --- Функция для регистрации VS Code в системе ---
-function Register-VSCode {
-    $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
-
-    # Проверяем, что VS Code установлен
-    if (-not (Test-Path $vscodePath)) {
-        Write-Host "VS Code not found at $vscodePath, skipping registration."
-        return
-    }
-
-    Write-Host "Registering VS Code in system..."
-
-    # Файлы .reg для импорта
-    $regFiles = @(
-        "install-context.reg",
-        "install-associations.reg",
-        "install-github-integration.reg"
-    )
-
-    $successCount = 0
-    foreach ($regFile in $regFiles) {
-        $regPath = Join-Path $vscodePath $regFile
-        if (Test-Path $regPath) {
-            Write-Host "Importing $regFile..."
-            try {
-                reg import $regPath
-                $successCount++
-            }
-            catch {
-                Write-Warning "Failed to import $regFile: ${_}"
-            }
-        }
-        else {
-            Write-Warning "$regFile not found at $regPath"
-        }
-    }
-
-    if ($successCount -eq $regFiles.Count) {
-        Write-Host "✅ VS Code successfully registered in system."
-    }
-    else {
-        Write-Host "⚠️ Partially registered ($successCount of $($regFiles.Count) files imported)."
-    }
-}
-
 # --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop for package installation..."
@@ -84,8 +39,11 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
         scoop install $pkg 2>&1 | Out-Null
     }
 
-    # --- Регистрация VS Code в системе (после установки) ---
-    Register-VSCode
+    # --- Регистрация VS Code в системе ---
+    Write-Host "Registering VS Code in system..."
+    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-context.reg"
+    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-associations.reg"
+    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-github-integration.reg"
 
     # Шрифты Nerd Fonts
     $buckets = (scoop bucket list 2>$null).Name
