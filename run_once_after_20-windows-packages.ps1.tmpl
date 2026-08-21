@@ -41,6 +41,7 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
 
     # --- Регистрация VS Code в системе ---
     Write-Host "Registering VS Code in system..."
+    $userProfile = $env:USERNAME
     reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-context.reg"
     reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-associations.reg"
     reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-github-integration.reg"
