@@ -33,7 +33,7 @@ Install-Age
 # --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop for package installation..."
-    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic")
+    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic", "windows-terminal")
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
