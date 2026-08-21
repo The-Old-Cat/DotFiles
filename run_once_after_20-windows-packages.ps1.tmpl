@@ -47,11 +47,47 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Install-Age
 
     $packages = @(
-        "git", "gh", "fd", "ripgrep", "fzf", "restic",
-        "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
-        "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
-    )
+    # Основные инструменты
+    "git", "gh", "fd", "ripgrep", "fzf", "restic",
+    "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
+    "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip",
 
+    # CLI-улучшения
+    "jq", "yq",
+    "zoxide",
+    "dust",
+    "procs",
+    "bat",
+    "starship",
+
+    # Сеть / утилиты
+    "nmap",
+    "wireshark",          # или "tshark" если нужен только CLI
+    "httpie",
+    "wget",
+    "yt-dlp",
+    "ffmpeg",
+
+    # Безопасность / продуктивность
+    "bitwarden-cli",
+    "obsidian",
+    "flow-launcher",
+
+    # Разработка
+    "nodejs-lts",
+    "go",
+
+    # Sysinternals
+    "procexp",
+    "autoruns",
+    "tcpview",
+    "handle",
+    "du",
+    "procmon",
+    "psservice",
+    "rammap",
+    "sysmon"
+)
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
@@ -74,6 +110,40 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     # --- Шрифты Nerd Fonts ---
     Write-Host "Installing Hasklig-NF..."
     scoop install Hasklig-NF | Out-Null
+
+    # --- PowerShell Profile + Starship ---
+    Write-Host "Configuring PowerShell profile for Starship..."
+
+    if (!(Test-Path -Path $PROFILE)) {
+        New-Item -ItemType File -Path $PROFILE -Force | Out-Null
+        Write-Host "Created PowerShell profile: $PROFILE"
+    }
+
+    $starshipBlock = @'
+# Managed by chezmoi
+
+# Starship prompt
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&starship init powershell)
+}
+'@
+
+    $profileContent = Get-Content -Path $PROFILE -Raw -ErrorAction SilentlyContinue
+
+    if ($profileContent -notmatch "starship init powershell") {
+        # Если файл пустой или почти пустой — перезаписываем
+        if ([string]::IsNullOrWhiteSpace($profileContent)) {
+            Set-Content -Path $PROFILE -Value $starshipBlock -Encoding UTF8
+        }
+        else {
+            # Иначе просто дописываем в конец
+            Add-Content -Path $PROFILE -Value "`n$starshipBlock" -Encoding UTF8
+        }
+        Write-Host "✓ Starship init added to PowerShell profile"
+    }
+    else {
+        Write-Host "✓ Starship already configured in PowerShell profile"
+    }
 
     # --- Проверка конфига Alacritty (управляется chezmoi через AppData/Roaming) ---
     $alacrittyConfig = "$env:APPDATA\alacritty\alacritty.toml"
