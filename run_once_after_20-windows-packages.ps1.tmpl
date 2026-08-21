@@ -3,32 +3,94 @@
 
 $ErrorActionPreference = "Stop"
 
+# --- Установка Age через scoop ---
 function Install-Age {
-    if (Get-Command age-keygen -ErrorAction SilentlyContinue) { return }
-    Write-Host "Installing age..."
-    if (Get-Command scoop -ErrorAction SilentlyContinue) {
-        scoop install age 2>&1 | Out-Null
+    if (Get-Command age-keygen -ErrorAction SilentlyContinue) {
+        Write-Host "age is already installed."
+        return
     }
-    if (-not (Get-Command age-keygen -ErrorAction SilentlyContinue)) {
-        # fallback: официальный релиз FiloSottile/age
-        $rel = Invoke-RestMethod "https://api.github.com/repos/FiloSottile/age/releases/latest"
-        $url = ($rel.assets | Where-Object { $_.name -match "windows-amd64\.zip" } | Select-Object -First 1).browser_download_url
-        Invoke-WebRequest $url -OutFile "$env:TEMP\age.zip"
-        Expand-Archive "$env:TEMP\age.zip" -DestinationPath "$env:TEMP\age" -Force
-        $bin = "$env:USERPROFILE\.local\bin"
-        New-Item -ItemType Directory -Force $bin | Out-Null
-        $exe = Get-ChildItem "$env:TEMP\age" -Recurse -Filter "age.exe" | Select-Object -First 1
-        Copy-Item $exe.FullName, (Join-Path $exe.DirectoryName "age-keygen.exe") $bin -Force
-        $u = [Environment]::GetEnvironmentVariable("PATH", "User")
-        if ($u -notlike "*$bin*") { [Environment]::SetEnvironmentVariable("PATH", "$u;$bin", "User") }
-        Remove-Item "$env:TEMP\age.zip", "$env:TEMP\age" -Recurse -Force
+
+    Write-Host "Installing age via scoop..."
+
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+        Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
+        return
     }
-    if (Get-Command age-keygen -ErrorAction SilentlyContinue) { Write-Host "age OK" }
-    else { Write-Warning "age install FAILED" }
+
+    $buckets = (scoop bucket list 2>$null).Name
+    if ($buckets -notcontains "extras") {
+        Write-Host "Adding 'extras' bucket..."
+        scoop bucket add extras | Out-Null
+    }
+
+    scoop install age | Out-Null
+    Write-Host "age installed successfully."
+}
+Install-Age
+
+# --- Функция для установки Alacritty конфига в AppData ---
+function Set-AlacrittyConfig {
+    $sourcePath = "$env:USERPROFILE\.config\alacritty\alacritty.windows.toml"
+    $targetPath = "$env:APPDATA\alacritty\alacritty.toml"
+    $configDir = "$env:APPDATA\alacritty"
+
+    # Создаем папку в AppData, если её нет
+    if (-not (Test-Path $configDir)) {
+        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+        Write-Host "Created Alacritty config directory in AppData"
+    }
+
+    # Проверяем, существует ли файл-источник
+    if (-not (Test-Path $sourcePath)) {
+        Write-Warning "alacritty.windows.toml not found at $sourcePath"
+        Write-Host "Please ensure the config file exists in your chezmoi source"
+        return
+    }
+
+    # Копируем конфиг в AppData (с перезаписью)
+    try {
+        Copy-Item -Path $sourcePath -Destination $targetPath -Force
+        Write-Host "✓ Alacritty config updated in AppData"
+    }
+    catch {
+        Write-Warning "Failed to copy config: $_"
+    }
 }
 
+# --- Функция для создания симлинка на Alacritty конфиг (для совместимости) ---
+function Set-AlacrittySymlink {
+    $configPath = "$env:USERPROFILE\.config\alacritty"
+    $targetPath = "$configPath\alacritty.windows.toml"
+    $linkPath = "$configPath\alacritty.toml"
+
+    if (-not (Test-Path $configPath)) {
+        New-Item -ItemType Directory -Path $configPath -Force | Out-Null
+        Write-Host "Created Alacritty config directory"
+    }
+
+    if (-not (Test-Path $targetPath)) {
+        Write-Warning "alacritty.windows.toml not found at $targetPath"
+        return
+    }
+
+    if (Test-Path $linkPath) {
+        Remove-Item -Path $linkPath -Force
+    }
+
+    try {
+        New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath -Force | Out-Null
+        Write-Host "✓ Symlink created for Windows Alacritty config"
+    }
+    catch {
+        Write-Warning "Failed to create symlink, copying instead..."
+        Copy-Item -Path $targetPath -Destination $linkPath -Force
+        Write-Host "✓ Config copied"
+    }
+}
+
+# --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    Write-Host "Using scoop..."
+    Write-Host "Using scoop for package installation..."
     $packages = @(
         "git", "gh", "fd", "ripgrep", "fzf", "restic",
         "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
@@ -38,24 +100,39 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
     }
-    Install-Age
 
-    # VS Code: контекстное меню
-    $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
+    # --- Регистрация VS Code в системе ---
+    Write-Host "Registering VS Code in system..."
+    $userProfile = $env:USERNAME
+    $vscodePath = "C:\Users\$userProfile\scoop\apps\vscode\current"
+
     if (Test-Path $vscodePath) {
         reg import "$vscodePath\install-context.reg" 2>&1 | Out-Null
         reg import "$vscodePath\install-associations.reg" 2>&1 | Out-Null
-        Write-Host "VS Code registered"
+        reg import "$vscodePath\install-github-integration.reg" 2>&1 | Out-Null
+        Write-Host "✓ VS Code registered"
+    }
+    else {
+        Write-Warning "VS Code not found at $vscodePath"
     }
 
-    # Шрифты
+    # Шрифты Nerd Fonts
     $buckets = (scoop bucket list 2>$null).Name
-    if ($buckets -notcontains "nerd-fonts") { scoop bucket add nerd-fonts | Out-Null }
-    scoop install Hasklig-NF 2>&1 | Out-Null
-    Write-Host "Windows packages installed"
+    if ($buckets -notcontains "nerd-fonts") {
+        Write-Host "Adding 'nerd-fonts' bucket..."
+        scoop bucket add nerd-fonts | Out-Null
+    }
+    Write-Host "Installing Hasklig-NF..."
+    scoop install Hasklig-NF | Out-Null
+
+    # --- Настройка Alacritty ---
+    Set-AlacrittySymlink   # Для совместимости
+    Set-AlacrittyConfig    # Копирует в AppData (перезаписывает)
+
+    Write-Host "All Windows packages installed via scoop."
 }
 else {
-    Write-Warning "Scoop not installed: iwr -useb get.scoop.sh | iex"
+    Write-Warning "Scoop is not installed. Please run: iwr -useb get.scoop.sh | iex"
 }
 
 {{- end }}
