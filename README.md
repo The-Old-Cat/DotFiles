@@ -33,6 +33,8 @@ dotfiles/
 │   │   └── chezmoi.toml              # Конфиг chezmoi (управляется через шаблон)
 │   ├── tmux/                         # Конфигурация терминального мультиплексора tmux
 │   └── alacritty/                    # Конфигурация терминала Alacritty
+│       ├── alacritty.linux.yml       # Конфиг для Linux (нативная установка)
+│       └── alacritty.windows.yml     # Конфиг для Windows (через Scoop)
 ├── run_once_after_10-base-packages.sh.tmpl  # Установка базовых пакетов (Linux)
 └── run_once_after_20-windows-packages.ps1.tmpl # Установка пакетов (Windows)
 ```
@@ -56,7 +58,6 @@ dotfiles/
    ```bash
    chezmoi init --apply The-Old-Cat
    ```
-   Эта команда клонирует репозиторий, сгенерирует файлы из шаблонов и применит их в вашем `$HOME`.
 
 ### Windows
 
@@ -66,19 +67,14 @@ dotfiles/
    iwr -useb get.scoop.sh | iex
    ```
 
-2. **Установите необходимые пакеты через Scoop:**
-   ```powershell
-   scoop install chezmoi git gh vscode
-   scoop bucket add nerd-fonts
-   scoop install Hasklig-NF # Установите ваш любимый шрифт с Nerd Fonts
-   ```
-
-3. **Инициализируйте и примените конфигурацию (в Git Bash):**
+2. **Инициализируйте и примените конфигурацию (в Git Bash):**
    ```bash
    chezmoi init --apply The-Old-Cat
    ```
+
+3. **Аутентификация в GitHub:**
    ```powershell
-   gh auth login # Для аутентификации в GitHub
+   gh auth login
    ```
 
 ## 🔄 Ежедневное использование
@@ -115,10 +111,42 @@ git push
 
 Скрипты с префиксом `run_once_` выполняются только один раз после первого применения (`chezmoi apply`). Состояние их выполнения хранится в `~/.config/chezmoi/chezmoistate.boltdb`.
 
-- **`run_once_after_10-base-packages.sh.tmpl`**: Устанавливает базовые пакеты для Linux (Ubuntu/Debian) с помощью `apt-get` (git, curl, wget, htop, jq, age, restic, gh, docker.io). Использует Go-шаблоны для условной логики в зависимости от ОС и имени хоста.
-- **`run_once_after_20-windows-packages.ps1.tmpl`**: Устанавливает пакеты для Windows с помощью `winget` (Git.Git, GitHub.cli, Microsoft.PowerShell и др.) и `scoop`.
+### Linux (`run_once_after_10-base-packages.sh.tmpl`)
 
-**Примеры работы с run_once скриптами:**
+Устанавливает базовые пакеты для Linux (Ubuntu/Debian) с помощью `apt-get`:
+
+- **Базовые пакеты**: git, curl, wget, htop, jq, age, restic, gh, unzip, tmux, fontconfig
+- **Терминал**: Alacritty (только для нативного Linux, не в WSL)
+- **Python-инструменты**: `uv` (современный менеджер пакетов) + Python 3.12
+- **Шрифты**: Hasklug Nerd Font (только для нативного Linux, не в WSL)
+- **Условная логика**:
+  - WSL → пропускает установку терминала и шрифтов
+  - Proxmox → добавляет `pve-manager-tools`
+  - WSL-хост `ADM00-01IT` → добавляет Docker
+
+### Windows (`run_once_after_20-windows-packages.ps1.tmpl`)
+
+Устанавливает пакеты для Windows через **Scoop**:
+
+```powershell
+# Пакеты для разработки
+git, gh, vscode, pwsh, uv
+
+# Утилиты командной строки
+fd, ripgrep, fzf, curl, sudo, grep, aria2, 7zip
+
+# Терминалы
+windows-terminal, alacritty
+
+# Дополнительно
+age, restic, advanced-ip-scanner, Hasklig-NF (шрифт)
+```
+
+**Автоматическая настройка:**
+- Регистрация VS Code в системе (контекстное меню, ассоциации файлов, интеграция с GitHub)
+- Создание симлинка `alacritty.yml` → `alacritty.windows.yml`
+
+### Примеры работы с run_once скриптами
 
 ```bash
 # Просмотр сгенерированного скрипта для текущего хоста
@@ -127,8 +155,11 @@ chezmoi execute-template < run_once_after_10-base-packages.sh.tmpl
 # Симуляция выполнения на Windows
 chezmoi execute-template --init --promptString "os=windows,hostname=WIN-PC" < run_once_after_20-windows-packages.ps1.tmpl
 
-# Ручной запуск сгенерированного скрипта
+# Ручной запуск сгенерированного скрипта (Linux)
 chezmoi execute-template < run_once_after_10-base-packages.sh.tmpl | bash
+
+# Ручной запуск сгенерированного скрипта (Windows)
+chezmoi execute-template < run_once_after_20-windows-packages.ps1.tmpl | powershell -Command -
 ```
 
 ## 📊 Шаблоны и данные
@@ -169,7 +200,12 @@ chezmoi data
 - **[GitHub CLI (gh)](https://cli.github.com/)** — для аутентификации и работы с GitHub.
 - **[VS Code](https://code.visualstudio.com/)** — редактор по умолчанию.
 - **[tmux](https://github.com/tmux/tmux/wiki)** — терминальный мультиплексор.
-- **[Alacritty](https://alacritty.org/)** — быстрый терминал с GPU-рендерингом.
+- **[Alacritty](https://alacritty.org/)** — кроссплатформенный терминал с GPU-рендерингом.
+- **[Windows Terminal](https://github.com/microsoft/terminal)** — современный терминал для Windows.
+- **[Scoop](https://scoop.sh/)** — менеджер пакетов для Windows.
+- **[uv](https://github.com/astral-sh/uv)** — быстрый менеджер пакетов для Python.
+- **[age](https://github.com/FiloSottile/age)** — простое и современное шифрование файлов.
+- **[restic](https://restic.net/)** — резервное копирование с шифрованием.
 
 ## 📚 Дополнительная информация
 
@@ -178,5 +214,4 @@ chezmoi data
 
 ---
 
-**Лицензия**: Этот репозиторий создан для личного использования.
-Вы можете использовать его как основу для своих собственных настроек.
+**Лицензия**: Этот репозиторий создан для личного использования. Вы можете использовать его как основу для своих собственных настроек.

@@ -1,90 +1,56 @@
-# ~/.config/alacritty/alacritty.yml
-# Конфигурация Alacritty для The-Old-Cat
+# ~/.config/alacritty/alacritty.windows.yml
+# Конфигурация для Windows (через Scoop)
 
 # --- Окно ---
 window:
-  # Прозрачность фона (0.0 - непрозрачный, 1.0 - полностью прозрачный)
-  opacity: 0.95
-
-  # Размеры окна при запуске (колонки x строки)
+  opacity: 0.90
   dimensions:
     columns: 120
     lines: 30
-
-  # Отступы внутри окна (пиксели)
   padding:
     x: 10
     y: 10
-
-  # Позиция окна при запуске (x, y)
   position:
     x: 0
     y: 0
-
-  # Динамическое изменение размера шрифта при изменении размера окна
   dynamic_padding: true
-
-  # Украшения окна (full, none, transparent, buttonless)
   decorations: full
-
-  # Опции для фокуса
   startup_mode: Windowed
-
-  # Заголовок окна
   title: Alacritty
   dynamic_title: true
 
 # --- Скаллинг ---
 scrolling:
-  # Количество строк для прокрутки (история)
   history: 10000
-
-  # Количество строк, прокручиваемых за один шаг
   multiplier: 3
 
 # --- Шрифт ---
 font:
-  # Основной шрифт
   normal:
     family: "Hasklug Nerd Font"
     style: Regular
-
-  # Жирный шрифт
   bold:
     family: "Hasklug Nerd Font"
     style: Bold
-
-  # Курсивный шрифт
   italic:
     family: "Hasklug Nerd Font"
     style: Italic
-
-  # Болд-курсив
   bold_italic:
     family: "Hasklug Nerd Font"
     style: Bold Italic
-
-  # Размер шрифта (в пунктах)
   size: 11.0
-
-  # Межсимвольный интервал
   offset:
     x: 0
     y: 0
-
-  # Интервал между строками
   glyph_offset:
     x: 0
     y: 0
 
 # --- Схема цветов (Tokyo Night Dark) ---
 colors:
-  # Основные цвета
   primary:
     background: '#1a1b26'
     foreground: '#c0caf5'
-
-  # Обычные цвета
   normal:
     black:   '#15161e'
     red:     '#f7768e'
@@ -94,8 +60,6 @@ colors:
     magenta: '#bb9af7'
     cyan:    '#7dcfff'
     white:   '#a9b1d6'
-
-  # Яркие цвета
   bright:
     black:   '#414868'
     red:     '#f7768e'
@@ -105,39 +69,26 @@ colors:
     magenta: '#bb9af7'
     cyan:    '#7dcfff'
     white:   '#c0caf5'
-
-  # Индексы для выделения текста
   indexed_colors:
     - { index: 16, color: '#ff9e64' }
     - { index: 17, color: '#db4b4b' }
-
-  # Цвета для курсора и выделения
   selection:
     text: '#c0caf5'
     background: '#364a82'
-
   normal:
     text: '#c0caf5'
     background: '#1a1b26'
-
-  # Цвета для подсказок и поиска
   search:
     matches:
       background: '#3b4261'
     focused_match:
       background: '#bb9af7'
-
-  # Цвета для курсора (vim-режим)
   cursor:
     text: '#1a1b26'
     cursor: '#c0caf5'
-
-  # Цвета для выделения (vi-режим)
   vi_mode_cursor:
     text: '#1a1b26'
     cursor: '#bb9af7'
-
-  # Цвета для подсказок (при вводе команд)
   hints:
     start:
       foreground: '#1a1b26'
@@ -148,91 +99,57 @@ colors:
 
 # --- Настройки курсора ---
 cursor:
-  # Стиль курсора (Block, Underline, Beam)
   style:
     shape: Block
     blinking: Off
-
-  # Цвет курсора (можно указать один или два для инвертирования)
-  # Если пусто, наследуется от основного цвета
-  # text: '#1a1b26'
-  # cursor: '#c0caf5'
-
-  # Мигание курсора
   blink_interval: 750
   blink_timeout: 5
   unfocused_hollow: true
 
-# --- Настройки терминала (VT100) ---
+# --- Настройки терминала ---
 terminal:
-  # Режим совместимости с терминалом (xterm, vte, rxvt, etc.)
-  # none — использует стандартный протокол
   osc_foreground_color: true
-
-  # Настройки для приложений (например, vim)
   shell_integration:
-    # Включение интеграции с оболочкой
     enabled: true
-
-    # Команды для интеграции с оболочкой
     title: true
     current_directory: true
     prompt: true
 
 # --- Звуки и уведомления ---
 bell:
-  # Тип звукового сигнала (Visual, Audible, Disabled)
   command: none
-  # Визуальное уведомление при звонке
   visual_animation: true
 
 # --- Комбинации клавиш ---
 key_bindings:
-  # Копирование
   - { key: KeyC, mods: Control, action: Copy }
-  # Вставка
   - { key: KeyV, mods: Control, action: Paste }
-
-  # Увеличение шрифта
   - { key: Plus, mods: Control, action: IncreaseFontSize }
   - { key: Plus, mods: Control|Shift, action: IncreaseFontSize }
   - { key: KeyEquals, mods: Control, action: IncreaseFontSize }
-
-  # Уменьшение шрифта
   - { key: Minus, mods: Control, action: DecreaseFontSize }
   - { key: Minus, mods: Control|Shift, action: DecreaseFontSize }
-
-  # Сброс размера шрифта
   - { key: Key0, mods: Control, action: ResetFontSize }
-
-  # Переключение полноэкранного режима
   - { key: KeyF, mods: Control|Shift, action: ToggleFullscreen }
-
-  # Прокрутка вверх/вниз (Shift+PageUp/PageDown)
   - { key: PageUp, mods: Shift, action: ScrollPageUp }
   - { key: PageDown, mods: Shift, action: ScrollPageDown }
-
-  # Поиск
   - { key: KeyF, mods: Control|Shift, action: Search }
 
 # --- Настройки для мыши ---
 mouse:
-  # Прокрутка с помощью колесика мыши
   hide_when_typing: true
-
-  # События мыши (передача в приложения)
   bindings:
     - { mouse: Right, action: ExpandSelection }
     - { mouse: Middle, action: PasteSelection }
 
-# --- Пути к файлам ---
-# shell:
-#   program: /bin/bash
-#   args:
-#     - --login
-
-# --- Дополнительные настройки ---
-# live_config_reload: true
+# --- Оболочка для Windows (PowerShell Core) ---
+shell:
+  program: "{{ .chezmoi.homeDir }}\\scoop\\apps\\pwsh\\current\\pwsh.exe"
+  args:
+    - "--nologo"
+    - "-NoExit"
+    - "-Command"
+    - "Write-Host 'Welcome to PowerShell Core' -ForegroundColor Cyan"
 
 # Рабочая директория при запуске
 working_directory: None

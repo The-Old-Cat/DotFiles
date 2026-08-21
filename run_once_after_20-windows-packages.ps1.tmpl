@@ -30,12 +30,41 @@ function Install-Age {
 }
 Install-Age
 
+# --- Функция для создания симлинка на Alacritty конфиг ---
+function Set-AlacrittySymlink {
+    $configPath = "$env:USERPROFILE\.config\alacritty"
+    $targetPath = "$configPath\alacritty.windows.yml"
+    $linkPath = "$configPath\alacritty.yml"
+
+    # Создаем папку, если её нет
+    if (-not (Test-Path $configPath)) {
+        New-Item -ItemType Directory -Path $configPath -Force | Out-Null
+        Write-Host "Created Alacritty config directory"
+    }
+
+    # Проверяем, существует ли файл-цель
+    if (Test-Path $targetPath) {
+        # Удаляем старый симлинк, если он есть
+        if (Test-Path $linkPath) {
+            Remove-Item -Path $linkPath -Force
+        }
+        # Создаем новый симлинк
+        New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath -Force | Out-Null
+        Write-Host "✓ Symlink created for Windows Alacritty config"
+    }
+    else {
+        Write-Warning "alacritty.windows.yml not found at $targetPath"
+        Write-Host "Please ensure the config file exists before creating symlink"
+    }
+}
+
 # --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop for package installation..."
-    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic",
-    "windows-terminal", "alacritty", "uv","advanced-ip-scanner",
-    "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
+    $packages = @(
+        "git", "gh", "fd", "ripgrep", "fzf", "restic",
+        "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
+        "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
     )
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
@@ -45,9 +74,17 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     # --- Регистрация VS Code в системе ---
     Write-Host "Registering VS Code in system..."
     $userProfile = $env:USERNAME
-    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-context.reg"
-    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-associations.reg"
-    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-github-integration.reg"
+    $vscodePath = "C:\Users\$userProfile\scoop\apps\vscode\current"
+
+    if (Test-Path $vscodePath) {
+        reg import "$vscodePath\install-context.reg" 2>&1 | Out-Null
+        reg import "$vscodePath\install-associations.reg" 2>&1 | Out-Null
+        reg import "$vscodePath\install-github-integration.reg" 2>&1 | Out-Null
+        Write-Host "✓ VS Code registered"
+    }
+    else {
+        Write-Warning "VS Code not found at $vscodePath, skipping registration"
+    }
 
     # Шрифты Nerd Fonts
     $buckets = (scoop bucket list 2>$null).Name
@@ -57,6 +94,9 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     }
     Write-Host "Installing Hasklig-NF..."
     scoop install Hasklig-NF | Out-Null
+
+    # --- Создание симлинка на Alacritty конфиг (после установки) ---
+    Set-AlacrittySymlink
 
     Write-Host "All Windows packages installed via scoop."
 }
