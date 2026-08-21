@@ -17,85 +17,41 @@ function Install-Age {
         return
     }
 
+    scoop install age | Out-Null
+    Write-Host "age installed successfully."
+}
+
+# --- Основной блок ---
+if (Get-Command scoop -ErrorAction SilentlyContinue) {
+    Write-Host "Using scoop for package installation..."
+
+    # Добавляем необходимые buckets (один раз)
     $buckets = (scoop bucket list 2>$null).Name
+
     if ($buckets -notcontains "extras") {
         Write-Host "Adding 'extras' bucket..."
         scoop bucket add extras | Out-Null
     }
 
-    scoop install age | Out-Null
-    Write-Host "age installed successfully."
-}
-Install-Age
-
-# --- Функция для установки Alacritty конфига в AppData ---
-function Set-AlacrittyConfig {
-    $sourcePath = "$env:USERPROFILE\.config\alacritty\alacritty.windows.toml"
-    $targetPath = "$env:APPDATA\alacritty\alacritty.toml"
-    $configDir = "$env:APPDATA\alacritty"
-
-    # Создаем папку в AppData, если её нет
-    if (-not (Test-Path $configDir)) {
-        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
-        Write-Host "Created Alacritty config directory in AppData"
+    if ($buckets -notcontains "nerd-fonts") {
+        Write-Host "Adding 'nerd-fonts' bucket..."
+        scoop bucket add nerd-fonts | Out-Null
     }
 
-    # Проверяем, существует ли файл-источник
-    if (-not (Test-Path $sourcePath)) {
-        Write-Warning "alacritty.windows.toml not found at $sourcePath"
-        Write-Host "Please ensure the config file exists in your chezmoi source"
-        return
+    if ($buckets -notcontains "sysinternals") {
+        Write-Host "Adding 'sysinternals' bucket..."
+        scoop bucket add sysinternals | Out-Null
     }
 
-    # Копируем конфиг в AppData (с перезаписью)
-    try {
-        Copy-Item -Path $sourcePath -Destination $targetPath -Force
-        Write-Host "✓ Alacritty config updated in AppData"
-    }
-    catch {
-        Write-Warning "Failed to copy config: $_"
-    }
-}
+    # Устанавливаем age (после добавления buckets)
+    Install-Age
 
-# --- Функция для создания симлинка на Alacritty конфиг (для совместимости) ---
-function Set-AlacrittySymlink {
-    $configPath = "$env:USERPROFILE\.config\alacritty"
-    $targetPath = "$configPath\alacritty.windows.toml"
-    $linkPath = "$configPath\alacritty.toml"
-
-    if (-not (Test-Path $configPath)) {
-        New-Item -ItemType Directory -Path $configPath -Force | Out-Null
-        Write-Host "Created Alacritty config directory"
-    }
-
-    if (-not (Test-Path $targetPath)) {
-        Write-Warning "alacritty.windows.toml not found at $targetPath"
-        return
-    }
-
-    if (Test-Path $linkPath) {
-        Remove-Item -Path $linkPath -Force
-    }
-
-    try {
-        New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath -Force | Out-Null
-        Write-Host "✓ Symlink created for Windows Alacritty config"
-    }
-    catch {
-        Write-Warning "Failed to create symlink, copying instead..."
-        Copy-Item -Path $targetPath -Destination $linkPath -Force
-        Write-Host "✓ Config copied"
-    }
-}
-
-# --- Установка остальных пакетов ---
-if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    Write-Host "Using scoop for package installation..."
     $packages = @(
         "git", "gh", "fd", "ripgrep", "fzf", "restic",
         "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
         "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
     )
+
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
@@ -103,8 +59,7 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
 
     # --- Регистрация VS Code в системе ---
     Write-Host "Registering VS Code in system..."
-    $userProfile = $env:USERNAME
-    $vscodePath = "C:\Users\$userProfile\scoop\apps\vscode\current"
+    $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
 
     if (Test-Path $vscodePath) {
         reg import "$vscodePath\install-context.reg" 2>&1 | Out-Null
@@ -116,18 +71,18 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
         Write-Warning "VS Code not found at $vscodePath"
     }
 
-    # Шрифты Nerd Fonts
-    $buckets = (scoop bucket list 2>$null).Name
-    if ($buckets -notcontains "nerd-fonts") {
-        Write-Host "Adding 'nerd-fonts' bucket..."
-        scoop bucket add nerd-fonts | Out-Null
-    }
+    # --- Шрифты Nerd Fonts ---
     Write-Host "Installing Hasklig-NF..."
     scoop install Hasklig-NF | Out-Null
 
-    # --- Настройка Alacritty ---
-    Set-AlacrittySymlink   # Для совместимости
-    Set-AlacrittyConfig    # Копирует в AppData (перезаписывает)
+    # --- Проверка конфига Alacritty (управляется chezmoi через AppData/Roaming) ---
+    $alacrittyConfig = "$env:APPDATA\alacritty\alacritty.toml"
+    if (Test-Path $alacrittyConfig) {
+        Write-Host "✓ Alacritty config is present in AppData"
+    }
+    else {
+        Write-Warning "Alacritty config not found in AppData. Run 'chezmoi apply' if needed."
+    }
 
     Write-Host "All Windows packages installed via scoop."
 }
