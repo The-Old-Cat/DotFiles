@@ -89,18 +89,18 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         pve-manager-tools
     {{- end }}
 
-    # Шрифты: Hasklug Nerd Font (официальный релиз nerd-fonts)
+    # Шрифты: CascadiaCode-NF-Mono (официальный релиз nerd-fonts)
     # Устанавливаем только если НЕ WSL (в WSL шрифты обычно ставятся на Windows)
     if [ "$IS_WSL" = false ]; then
         if ! fc-list | grep -qi "hasklug"; then
-            echo "Installing Hasklug Nerd Font..."
+            echo "Installing CascadiaCode-NF-Mono..."
             mkdir -p ~/.local/share/fonts/hasklig
             curl -fLo /tmp/Hasklig.zip \
                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
             unzip -qo /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
             rm -f /tmp/Hasklig.zip
             fc-cache -f ~/.local/share/fonts >/dev/null
-            echo "✓ Hasklug Nerd Font installed"
+            echo "✓ CascadiaCode-NF-Mono installed"
         fi
     else
         echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
