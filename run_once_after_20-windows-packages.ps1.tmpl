@@ -12,13 +12,11 @@ function Install-Age {
 
     Write-Host "Installing age via scoop..."
 
-    # Проверяем, установлен ли scoop
     if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
         Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
         return
     }
 
-    # Добавляем бакет extras
     $buckets = (scoop bucket list 2>$null).Name
     if ($buckets -notcontains "extras") {
         Write-Host "Adding 'extras' bucket..."
@@ -49,10 +47,10 @@ function Set-AlacrittyConfig {
         return
     }
 
-    # Копируем конфиг в AppData
+    # Копируем конфиг в AppData (с перезаписью)
     try {
         Copy-Item -Path $sourcePath -Destination $targetPath -Force
-        Write-Host "✓ Alacritty config copied to $targetPath"
+        Write-Host "✓ Alacritty config updated in AppData"
     }
     catch {
         Write-Warning "Failed to copy config: $_"
@@ -65,41 +63,28 @@ function Set-AlacrittySymlink {
     $targetPath = "$configPath\alacritty.windows.toml"
     $linkPath = "$configPath\alacritty.toml"
 
-    # Создаем папку, если её нет
     if (-not (Test-Path $configPath)) {
         New-Item -ItemType Directory -Path $configPath -Force | Out-Null
         Write-Host "Created Alacritty config directory"
     }
 
-    # Проверяем, существует ли файл-цель
     if (-not (Test-Path $targetPath)) {
         Write-Warning "alacritty.windows.toml not found at $targetPath"
-        Write-Host "Please ensure the config file exists before creating symlink"
         return
     }
 
-    # Удаляем старый файл/симлинк, если он есть
     if (Test-Path $linkPath) {
         Remove-Item -Path $linkPath -Force
     }
 
-    # Пробуем создать симлинк
     try {
         New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath -Force | Out-Null
         Write-Host "✓ Symlink created for Windows Alacritty config"
     }
     catch {
-        Write-Warning "Failed to create symlink (requires admin rights or Developer Mode)"
-        Write-Host "Fallback: copying config file instead..."
-
+        Write-Warning "Failed to create symlink, copying instead..."
         Copy-Item -Path $targetPath -Destination $linkPath -Force
-        Write-Host "✓ Config copied (use symlink for automatic updates)"
-
-        Write-Host ""
-        Write-Host "To enable symlinks without admin rights:"
-        Write-Host "  1. Open Settings → Privacy & Security → For Developers"
-        Write-Host "  2. Enable Developer Mode"
-        Write-Host "  3. Run this script again for symlink"
+        Write-Host "✓ Config copied"
     }
 }
 
@@ -128,7 +113,7 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
         Write-Host "✓ VS Code registered"
     }
     else {
-        Write-Warning "VS Code not found at $vscodePath, skipping registration"
+        Write-Warning "VS Code not found at $vscodePath"
     }
 
     # Шрифты Nerd Fonts
@@ -141,11 +126,8 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     scoop install Hasklig-NF | Out-Null
 
     # --- Настройка Alacritty ---
-    # 1. Создаем симлинк в .config (для совместимости с Linux-подходом)
-    Set-AlacrittySymlink
-
-    # 2. Копируем конфиг в AppData (где Alacritty на Windows ищет по умолчанию)
-    Set-AlacrittyConfig
+    Set-AlacrittySymlink   # Для совместимости
+    Set-AlacrittyConfig    # Копирует в AppData (перезаписывает)
 
     Write-Host "All Windows packages installed via scoop."
 }
