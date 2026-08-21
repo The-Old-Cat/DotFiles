@@ -1,0 +1,93 @@
+# ~/.config/alacritty/alacritty.toml
+
+[window]
+opacity = 0.90
+dimensions = { columns = 120, lines = 30 }
+padding = { x = 10, y = 10 }
+dynamic_padding = true
+decorations = "full"
+startup_mode = "Windowed"
+title = "Alacritty"
+dynamic_title = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+size = 11.0
+
+[font.normal]
+family = "Hasklug Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "Hasklug Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "Hasklug Nerd Font"
+style = "Italic"
+
+[font.bold_italic]
+family = "Hasklug Nerd Font"
+style = "Bold Italic"
+
+[colors.primary]
+background = "#1a1b26"
+foreground = "#c0caf5"
+
+[colors.normal]
+black = "#15161e"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#a9b1d6"
+
+[colors.bright]
+black = "#414868"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#c0caf5"
+
+[cursor]
+blinking = "Off"
+
+[cursor.style]
+shape = "Block"
+
+[[key_bindings]]
+key = "KeyC"
+mods = "Control"
+action = "Copy"
+
+[[key_bindings]]
+key = "KeyV"
+mods = "Control"
+action = "Paste"
+
+[[key_bindings]]
+key = "Plus"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[key_bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[key_bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"
+
+[shell]
+program = "C:\\Users\\kovalenko_aa\\scoop\\apps\\pwsh\\current\\pwsh.exe"
+args = ["--nologo"]

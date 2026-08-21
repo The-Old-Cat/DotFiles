@@ -109,7 +109,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # --- Создание симлинка на правильный конфиг Alacritty (только если НЕ WSL) ---
     if [ "$IS_WSL" = false ]; then
         if [ -f ~/.config/alacritty/alacritty.linux.yml ]; then
-            ln -sf ~/.config/alacritty/alacritty.linux.yml ~/.config/alacritty/alacritty.yml
+            ln -sf ~/.config/alacritty/alacritty.linux.toml ~/.config/alacritty/alacritty.toml
             echo "✓ Symlink created for Linux Alacritty config"
         else
             echo "⚠️ alacritty.linux.yml not found, skipping symlink"

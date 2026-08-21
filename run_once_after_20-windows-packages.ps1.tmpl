@@ -33,8 +33,8 @@ Install-Age
 # --- Функция для создания симлинка на Alacritty конфиг ---
 function Set-AlacrittySymlink {
     $configPath = "$env:USERPROFILE\.config\alacritty"
-    $targetPath = "$configPath\alacritty.windows.yml"
-    $linkPath = "$configPath\alacritty.yml"
+    $targetPath = "$configPath\alacritty.windows.toml"
+    $linkPath = "$configPath\alacritty.toml"
 
     # Создаем папку, если её нет
     if (-not (Test-Path $configPath)) {

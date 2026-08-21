@@ -1,0 +1,197 @@
+# ~/.config/alacritty/alacritty.linux.toml
+# Конфигурация для Linux (нативная)
+
+[window]
+opacity = 0.90
+dimensions = { columns = 120, lines = 30 }
+padding = { x = 10, y = 10 }
+position = { x = 0, y = 0 }
+dynamic_padding = true
+decorations = "full"
+startup_mode = "Windowed"
+title = "Alacritty"
+dynamic_title = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+size = 11.0
+offset = { x = 0, y = 0 }
+glyph_offset = { x = 0, y = 0 }
+
+[font.normal]
+family = "Hasklug Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "Hasklug Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "Hasklug Nerd Font"
+style = "Italic"
+
+[font.bold_italic]
+family = "Hasklug Nerd Font"
+style = "Bold Italic"
+
+[colors.primary]
+background = "#1a1b26"
+foreground = "#c0caf5"
+
+[colors.normal]
+black = "#15161e"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#a9b1d6"
+
+[colors.bright]
+black = "#414868"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#c0caf5"
+
+[colors]
+indexed_colors = [
+    { index = 16, color = "#ff9e64" },
+    { index = 17, color = "#db4b4b" }
+]
+
+[colors.selection]
+text = "#c0caf5"
+background = "#364a82"
+
+[colors.normal]
+text = "#c0caf5"
+background = "#1a1b26"
+
+[colors.search.matches]
+background = "#3b4261"
+
+[colors.search.focused_match]
+background = "#bb9af7"
+
+[colors.cursor]
+text = "#1a1b26"
+cursor = "#c0caf5"
+
+[colors.vi_mode_cursor]
+text = "#1a1b26"
+cursor = "#bb9af7"
+
+[colors.hints.start]
+foreground = "#1a1b26"
+background = "#e0af68"
+
+[colors.hints.end]
+foreground = "#1a1b26"
+background = "#e0af68"
+
+[cursor]
+blink_interval = 750
+blink_timeout = 5
+unfocused_hollow = true
+
+[cursor.style]
+shape = "Block"
+blinking = "Off"
+
+[terminal]
+osc_foreground_color = true
+
+[terminal.shell_integration]
+enabled = true
+title = true
+current_directory = true
+prompt = true
+
+[bell]
+command = "none"
+visual_animation = true
+
+[[key_bindings]]
+key = "KeyC"
+mods = "Control"
+action = "Copy"
+
+[[key_bindings]]
+key = "KeyV"
+mods = "Control"
+action = "Paste"
+
+[[key_bindings]]
+key = "Plus"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[key_bindings]]
+key = "Plus"
+mods = "Control|Shift"
+action = "IncreaseFontSize"
+
+[[key_bindings]]
+key = "KeyEquals"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[key_bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[key_bindings]]
+key = "Minus"
+mods = "Control|Shift"
+action = "DecreaseFontSize"
+
+[[key_bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"
+
+[[key_bindings]]
+key = "KeyF"
+mods = "Control|Shift"
+action = "ToggleFullscreen"
+
+[[key_bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[key_bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[key_bindings]]
+key = "KeyF"
+mods = "Control|Shift"
+action = "Search"
+
+[mouse]
+hide_when_typing = true
+
+[[mouse.bindings]]
+mouse = "Right"
+action = "ExpandSelection"
+
+[[mouse.bindings]]
+mouse = "Middle"
+action = "PasteSelection"
+
+[shell]
+program = "/bin/bash"
+args = ["--login"]
+
+working_directory = "None"
