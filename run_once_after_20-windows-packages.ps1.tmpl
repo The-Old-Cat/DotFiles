@@ -41,9 +41,9 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
 
     # --- Регистрация VS Code в системе ---
     Write-Host "Registering VS Code in system..."
-    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-context.reg"
-    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-associations.reg"
-    reg import "C:\Users\kovalenko_aa\scoop\apps\vscode\current\install-github-integration.reg"
+    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-context.reg"
+    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-associations.reg"
+    reg import "C:\Users\$userProfile\scoop\apps\vscode\current\install-github-integration.reg"
 
     # Шрифты Nerd Fonts
     $buckets = (scoop bucket list 2>$null).Name
