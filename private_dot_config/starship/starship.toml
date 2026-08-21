@@ -29,7 +29,7 @@ disabled = false
 style = "bold blue"
 
 [os.symbols]
-Windows = " "
+Windows = "󰍲"
 Ubuntu = " "
 Debian = " "
 Arch = "󰣇 "
