@@ -59,7 +59,7 @@ function Register-VSCode {
                 $successCount++
             }
             catch {
-                Write-Warning "Failed to import $regFile: $_"
+                Write-Warning "Failed to import $regFile: ${_}"
             }
         }
         else {
