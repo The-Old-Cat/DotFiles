@@ -86,6 +86,6 @@ key = "Key0"
 mods = "Control"
 action = "ResetFontSize"
 
-[shell]
+[terminal.shell]
 program = "C:\\Users\\kovalenko_aa\\scoop\\apps\\pwsh\\current\\pwsh.exe"
 args = ["--nologo"]
