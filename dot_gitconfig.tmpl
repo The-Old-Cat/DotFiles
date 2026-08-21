@@ -1,20 +1,12 @@
 [credential "https://github.com"]
-	helper =
-{{- if (command . "gh" "auth" "git-credential" | empty | not) }}
-	helper = !gh auth git-credential
-{{- else }}
-	# helper = !/usr/bin/gh auth git-credential
-{{- end }}
+    helper =
+    helper = !gh auth git-credential
 [credential "https://gist.github.com"]
-	helper =
-{{- if (command . "gh" "auth" "git-credential" | empty | not) }}
-	helper = !gh auth git-credential
-{{- else }}
-	# helper = !/usr/bin/gh auth git-credential
-{{- end }}
+    helper =
+    helper = !gh auth git-credential
 [user]
-	name = {{ .name }}
-	email = {{ .email }}
+    name = {{ .name }}
+    email = {{ .email }}
 [core]
-	autocrlf = input
-	excludesfile = {{ .chezmoi.homeDir }}/.gitignore_global
+    autocrlf = input
+    excludesfile = {{ .chezmoi.homeDir }}/.gitignore_global
