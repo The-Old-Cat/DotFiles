@@ -61,31 +61,62 @@ white = "#c0caf5"
 [cursor]
 style = { shape = "Block" }
 
-[[key_bindings]]
-key = "KeyC"
-mods = "Control"
-action = "Copy"
+[bell]
+command = "none"
+visual_animation = true
 
-[[key_bindings]]
-key = "KeyV"
-mods = "Control"
-action = "Paste"
-
-[[key_bindings]]
-key = "Plus"
-mods = "Control"
-action = "IncreaseFontSize"
-
-[[key_bindings]]
-key = "Minus"
-mods = "Control"
-action = "DecreaseFontSize"
-
-[[key_bindings]]
-key = "Key0"
-mods = "Control"
-action = "ResetFontSize"
+[mouse]
+hide_when_typing = true
 
 [terminal.shell]
 program = "C:\\Users\\kovalenko_aa\\scoop\\apps\\pwsh\\current\\pwsh.exe"
 args = ["--nologo"]
+
+[terminal.working_directory]
+home = "None"
+
+# ---- Клавиатурные комбинации (новый синтаксис) ----
+[[keyboard.bindings]]
+key = "C"
+mods = "Control"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "Plus"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"
+
+[[keyboard.bindings]]
+key = "F11"
+mods = "Control"
+action = "ToggleFullscreen"
+
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[keyboard.bindings]]
+key = "F"
+mods = "Control|Shift"
+action = "Search"
