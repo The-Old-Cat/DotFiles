@@ -1,0 +1,142 @@
+# %APPDATA%\alacritty\alacritty.toml — Управляется через chezmoi (Windows Target)
+# НЕ РЕДАКТИРУЙТЕ ЭТОТ ФАЙЛ ВРУЧНУЮ
+
+[window]
+opacity = 0.90
+dimensions = { columns = 120, lines = 30 }
+padding = { x = 10, y = 10 }
+dynamic_padding = true
+decorations = "full"
+startup_mode = "Windowed"
+dynamic_title = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+size = 11.0
+
+[font.normal]
+family = "Hasklug Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "Hasklug Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "Hasklug Nerd Font"
+style = "Italic"
+
+[font.bold_italic]
+family = "Hasklug Nerd Font"
+style = "Bold Italic"
+
+[colors.primary]
+background = "#1a1b26"
+foreground = "#c0caf5"
+
+[colors.normal]
+black = "#15161e"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#a9b1d6"
+
+[colors.bright]
+black = "#414868"
+red = "#f7768e"
+green = "#9ece6a"
+yellow = "#e0af68"
+blue = "#7aa2f7"
+magenta = "#bb9af7"
+cyan = "#7dcfff"
+white = "#c0caf5"
+
+[colors.selection]
+text = "#c0caf5"
+background = "#364a82"
+
+[colors.cursor]
+text = "#1a1b26"
+cursor = "#c0caf5"
+
+[[colors.indexed_colors]]
+index = 16
+color = "#ff9e64"
+
+[[colors.indexed_colors]]
+index = 17
+color = "#db4b4b"
+
+[cursor]
+blink_interval = 750
+
+[cursor.style]
+shape = "Block"
+blinking = "Off"
+
+[bell]
+command = "none"
+animation = "EaseOutExpo"
+duration = 100
+
+[mouse]
+hide_when_typing = true
+bindings = [
+    { mouse = "Right", action = "ExpandSelection" },
+    { mouse = "Middle", action = "PasteSelection" }
+]
+
+[shell]
+program = "{{ .chezmoi.homeDir }}\\scoop\\apps\\pwsh\\current\\pwsh.exe"
+args = ["--nologo"]
+
+[[keyboard.bindings]]
+key = "C"
+mods = "Control"
+action = "Copy"
+
+[[keyboard.bindings]]
+key = "V"
+mods = "Control"
+action = "Paste"
+
+[[keyboard.bindings]]
+key = "Plus"
+mods = "Control"
+action = "IncreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Minus"
+mods = "Control"
+action = "DecreaseFontSize"
+
+[[keyboard.bindings]]
+key = "Key0"
+mods = "Control"
+action = "ResetFontSize"
+
+[[keyboard.bindings]]
+key = "F11"
+mods = "None"
+action = "ToggleFullscreen"
+
+[[keyboard.bindings]]
+key = "PageUp"
+mods = "Shift"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+mods = "Shift"
+action = "ScrollPageDown"
+
+[[keyboard.bindings]]
+key = "F"
+mods = "Control|Shift"
+action = "Search"
