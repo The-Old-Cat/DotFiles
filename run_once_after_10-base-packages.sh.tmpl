@@ -7,6 +7,15 @@ set -euo pipefail
 
 echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
 
+# Определяем, запущен ли скрипт в WSL
+IS_WSL=false
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    IS_WSL=true
+    echo "Running in WSL environment"
+else
+    echo "Running in native Linux environment"
+fi
+
 # --- Ubuntu/Debian: базовые пакеты ---
 if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 
@@ -25,6 +34,47 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     sudo apt-get install -y --no-install-recommends \
         git curl wget htop jq age restic gh unzip tmux fontconfig
 
+    # --- Установка терминала (только если НЕ WSL) ---
+    if [ "$IS_WSL" = false ]; then
+        echo "Installing terminal emulator for native Linux..."
+        sudo apt-get install -y --no-install-recommends alacritty
+        # Альтернатива: kitty
+        # sudo apt-get install -y --no-install-recommends kitty
+    else
+        echo "Skipping terminal installation (running in WSL, terminal is on Windows)"
+    fi
+
+    # --- Установка uv (современный менеджер для Python) ---
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "Installing uv (Python package manager)..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+
+        # Добавляем ~/.cargo/bin в PATH для текущей сессии
+        export PATH="$HOME/.cargo/bin:$PATH"
+
+        # Добавляем ~/.cargo/bin в PATH навсегда (в .bashrc)
+        if ! grep -q 'export PATH="$HOME/.cargo/bin:$PATH"' ~/.bashrc 2>/dev/null; then
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+            echo "✓ Added ~/.cargo/bin to PATH in .bashrc"
+        fi
+
+        if command -v uv >/dev/null 2>&1; then
+            echo "✓ uv installed successfully"
+            uv --version
+        else
+            echo "⚠️ uv installed but not in PATH. Please restart your terminal or run: source ~/.bashrc"
+        fi
+    else
+        echo "uv is already installed"
+        uv --version
+    fi
+
+    # --- Установка Python через uv (опционально) ---
+    if command -v uv >/dev/null 2>&1; then
+        echo "Pre-installing Python 3.12 via uv..."
+        uv python install 3.12 2>/dev/null || echo "Python 3.12 already installed or uv not ready"
+    fi
+
     {{- if eq .chezmoi.hostname "ADM00-01IT" }}
     # WSL-хост: Docker
     echo "Installing Docker for WSL..."
@@ -40,15 +90,20 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     {{- end }}
 
     # Шрифты: Hasklug Nerd Font (официальный релиз nerd-fonts)
-    if ! fc-list | grep -qi "hasklug"; then
-        echo "Installing Hasklug Nerd Font..."
-        mkdir -p ~/.local/share/fonts/hasklig
-        curl -fLo /tmp/Hasklig.zip \
-            https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
-        unzip -qo /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
-        rm -f /tmp/Hasklig.zip
-        fc-cache -f ~/.local/share/fonts >/dev/null
-        echo "✓ Hasklug Nerd Font installed"
+    # Устанавливаем только если НЕ WSL (в WSL шрифты обычно ставятся на Windows)
+    if [ "$IS_WSL" = false ]; then
+        if ! fc-list | grep -qi "hasklug"; then
+            echo "Installing Hasklug Nerd Font..."
+            mkdir -p ~/.local/share/fonts/hasklig
+            curl -fLo /tmp/Hasklig.zip \
+                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
+            unzip -qo /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
+            rm -f /tmp/Hasklig.zip
+            fc-cache -f ~/.local/share/fonts >/dev/null
+            echo "✓ Hasklug Nerd Font installed"
+        fi
+    else
+        echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
     fi
 
     echo "✓ Linux run-once completed"

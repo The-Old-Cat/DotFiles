@@ -33,7 +33,10 @@ Install-Age
 # --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop for package installation..."
-    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic", "windows-terminal", "pwsh", "vscode")
+    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic",
+    "windows-terminal", "alacritty", "uv","advanced-ip-scanner",
+    "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
+    )
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
