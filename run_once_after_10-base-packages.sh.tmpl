@@ -93,7 +93,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # Устанавливаем только если НЕ WSL (в WSL шрифты обычно ставятся на Windows)
     if [ "$IS_WSL" = false ]; then
         if ! fc-list | grep -qi "hasklug"; then
-            echo "Installing CascadiaCode-NF-Mono..."
+            echo "Installing JetBrainsMono-NF..."
             mkdir -p ~/.local/share/fonts/hasklig
             curl -fLo /tmp/Hasklig.zip \
                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
