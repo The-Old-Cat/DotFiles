@@ -43,18 +43,34 @@ function Set-AlacrittySymlink {
     }
 
     # Проверяем, существует ли файл-цель
-    if (Test-Path $targetPath) {
-        # Удаляем старый симлинк, если он есть
-        if (Test-Path $linkPath) {
-            Remove-Item -Path $linkPath -Force
-        }
-        # Создаем новый симлинк
+    if (-not (Test-Path $targetPath)) {
+        Write-Warning "alacritty.windows.toml not found at $targetPath"
+        Write-Host "Please ensure the config file exists before creating symlink"
+        return
+    }
+
+    # Удаляем старый файл/симлинк, если он есть
+    if (Test-Path $linkPath) {
+        Remove-Item -Path $linkPath -Force
+    }
+
+    # Пробуем создать симлинк
+    try {
         New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath -Force | Out-Null
         Write-Host "✓ Symlink created for Windows Alacritty config"
     }
-    else {
-        Write-Warning "alacritty.windows.yml not found at $targetPath"
-        Write-Host "Please ensure the config file exists before creating symlink"
+    catch {
+        Write-Warning "Failed to create symlink (requires admin rights or Developer Mode)"
+        Write-Host "Fallback: copying config file instead..."
+
+        Copy-Item -Path $targetPath -Destination $linkPath -Force
+        Write-Host "✓ Config copied (use symlink for automatic updates)"
+
+        Write-Host ""
+        Write-Host "To enable symlinks without admin rights:"
+        Write-Host "  1. Open Settings → Privacy & Security → For Developers"
+        Write-Host "  2. Enable Developer Mode"
+        Write-Host "  3. Run this script again for symlink"
     }
 }
 
