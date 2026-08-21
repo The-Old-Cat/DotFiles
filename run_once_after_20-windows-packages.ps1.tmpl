@@ -3,12 +3,13 @@
 
 $ErrorActionPreference = "Stop"
 
-# --- Функция для установки age через scoop (более простой и поддерживаемый способ) ---
+# --- Установка Age через scoop ---
 function Install-Age {
     if (Get-Command age-keygen -ErrorAction SilentlyContinue) {
         Write-Host "age is already installed."
         return
     }
+
     Write-Host "Installing age via scoop..."
 
     # Проверяем, установлен ли scoop
@@ -17,27 +18,74 @@ function Install-Age {
         return
     }
 
-    # Добавляем бакет 'extras', если его нет
+    # Добавляем бакет extras
     $buckets = (scoop bucket list 2>$null).Name
     if ($buckets -notcontains "extras") {
         Write-Host "Adding 'extras' bucket..."
         scoop bucket add extras | Out-Null
     }
 
-    # Устанавливаем age
     scoop install age | Out-Null
     Write-Host "age installed successfully."
 }
 Install-Age
 
+# --- Функция для регистрации VS Code в системе ---
+function Register-VSCode {
+    $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
+
+    # Проверяем, что VS Code установлен
+    if (-not (Test-Path $vscodePath)) {
+        Write-Host "VS Code not found at $vscodePath, skipping registration."
+        return
+    }
+
+    Write-Host "Registering VS Code in system..."
+
+    # Файлы .reg для импорта
+    $regFiles = @(
+        "install-context.reg",
+        "install-associations.reg",
+        "install-github-integration.reg"
+    )
+
+    $successCount = 0
+    foreach ($regFile in $regFiles) {
+        $regPath = Join-Path $vscodePath $regFile
+        if (Test-Path $regPath) {
+            Write-Host "Importing $regFile..."
+            try {
+                reg import $regPath
+                $successCount++
+            }
+            catch {
+                Write-Warning "Failed to import $regFile: $_"
+            }
+        }
+        else {
+            Write-Warning "$regFile not found at $regPath"
+        }
+    }
+
+    if ($successCount -eq $regFiles.Count) {
+        Write-Host "✅ VS Code successfully registered in system."
+    }
+    else {
+        Write-Host "⚠️ Partially registered ($successCount of $($regFiles.Count) files imported)."
+    }
+}
+
 # --- Установка остальных пакетов ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Host "Using scoop for package installation..."
-    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic", "windows-terminal", "pwsh")
+    $packages = @("git", "gh", "fd", "ripgrep", "fzf", "restic", "windows-terminal", "pwsh", "vscode")
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
     }
+
+    # --- Регистрация VS Code в системе (после установки) ---
+    Register-VSCode
 
     # Шрифты Nerd Fonts
     $buckets = (scoop bucket list 2>$null).Name
@@ -50,21 +98,8 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
 
     Write-Host "All Windows packages installed via scoop."
 }
-elseif (Get-Command winget -ErrorAction SilentlyContinue) {
-    Write-Host "Using winget for package installation..."
-    $packages = @(
-        "Git.Git", "GitHub.cli", "sharkdp.fd",
-        "BurntSushi.ripgrep.MSVC", "Junegunn.fzf", "NerdFonts.Hasklig"
-    )
-    foreach ($pkg in $packages) {
-        Write-Host "Installing $pkg..."
-        winget install --id $pkg --silent `
-            --accept-source-agreements --accept-package-agreements `
-            --source winget 2>&1 | Out-Null
-    }
-}
 else {
-    Write-Warning "Neither scoop nor winget found. Please bootstrap scoop: iwr -useb get.scoop.sh | iex"
+    Write-Warning "Scoop is not installed. Please run: iwr -useb get.scoop.sh | iex"
 }
 
 {{- end }}
