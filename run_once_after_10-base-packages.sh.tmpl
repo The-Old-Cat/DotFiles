@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run_once_after_10-base-packages.sh.tmpl
-# Условная установка пакетов и шрифтов: Linux only (Windows — отдельный .ps1.tmpl)
+# Условная установка пакетов и шрифтов: Linux only
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
@@ -38,13 +38,11 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     if [ "$IS_WSL" = false ]; then
         echo "Installing terminal emulator for native Linux..."
         sudo apt-get install -y --no-install-recommends alacritty
-        # Альтернатива: kitty
-        # sudo apt-get install -y --no-install-recommends kitty
     else
         echo "Skipping terminal installation (running in WSL, terminal is on Windows)"
     fi
 
-    # --- Установка uv (современный менеджер для Python) ---
+    # --- Установка uv (менеджер пакетов Python) ---
     if ! command -v uv >/dev/null 2>&1; then
         echo "Installing uv (Python package manager)..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -69,7 +67,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         uv --version
     fi
 
-    # --- Установка Python через uv (опционально) ---
+    # --- Установка Python через uv ---
     if command -v uv >/dev/null 2>&1; then
         echo "Pre-installing Python 3.12 via uv..."
         uv python install 3.12 2>/dev/null || echo "Python 3.12 already installed or uv not ready"
@@ -89,33 +87,31 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         pve-manager-tools
     {{- end }}
 
-    # Шрифты: CascadiaCode-NF-Mono (официальный релиз nerd-fonts)
-    # Устанавливаем только если НЕ WSL (в WSL шрифты обычно ставятся на Windows)
+    # --- Установка шрифта JetBrainsMono Nerd Font (только если НЕ WSL) ---
     if [ "$IS_WSL" = false ]; then
-        if ! fc-list | grep -qi "hasklug"; then
-            echo "Installing JetBrainsMono-NF..."
-            mkdir -p ~/.local/share/fonts/hasklig
-            curl -fLo /tmp/Hasklig.zip \
-                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hasklig.zip
-            unzip -qo /tmp/Hasklig.zip -d ~/.local/share/fonts/hasklig
-            rm -f /tmp/Hasklig.zip
+        if ! fc-list | grep -qi "jetbrainsmono"; then
+            echo "Installing JetBrainsMono Nerd Font..."
+            mkdir -p ~/.local/share/fonts/jetbrains-mono
+            curl -fLo /tmp/JetBrainsMono.zip \
+                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+            unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
+            rm -f /tmp/JetBrainsMono.zip
             fc-cache -f ~/.local/share/fonts >/dev/null
-            echo "✓ CascadiaCode-NF-Mono installed"
+            echo "✓ JetBrainsMono Nerd Font installed"
         fi
     else
         echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
     fi
 
-    # --- Создание симлинка на правильный конфиг Alacritty (только если НЕ WSL) ---
+    # --- Проверка конфига Alacritty (только если НЕ WSL) ---
     if [ "$IS_WSL" = false ]; then
-        if [ -f ~/.config/alacritty/alacritty.linux.yml ]; then
-            ln -sf ~/.config/alacritty/alacritty.linux.toml ~/.config/alacritty/alacritty.toml
-            echo "✓ Symlink created for Linux Alacritty config"
+        if [ -f ~/.config/alacritty/alacritty.toml ]; then
+            echo "✓ Alacritty config is present in ~/.config/alacritty"
         else
-            echo "⚠️ alacritty.linux.yml not found, skipping symlink"
+            echo "⚠️ Alacritty config not found. Run 'chezmoi apply' if needed."
         fi
     else
-        echo "Skipping Alacritty symlink (running in WSL, config is managed on Windows)"
+        echo "Skipping Alacritty check (running in WSL, config is managed on Windows)"
     fi
 
     echo "✓ Linux run-once completed"
