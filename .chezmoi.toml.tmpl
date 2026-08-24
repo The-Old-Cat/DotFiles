@@ -1,20 +1,34 @@
+# ~/.config/chezmoi/chezmoi.toml
+# Конфигурация Chezmoi
+
+# --- Шифрование ---
+# Используем age для шифрования секретов
 encryption = "age"
 
+# --- Редактор ---
+# Используем VS Code с флагом --wait для блокировки
 [edit]
     command = "code"
     args = ["--wait"]
 
+# --- Пользовательские данные ---
+# Используются в шаблонах (.tmpl файлы)
 [data]
     name = "The-Old-Cat"
     email = "artkov476@gmail.com"
 
-
+# --- Шифрование age ---
 [age]
+    # Путь к приватному ключу
     identity = "{{ .chezmoi.homeDir }}/.config/age/key.txt"
-    recipients = ["age1838zmykps32gmczv2l0w9gw0z9evu06565atvqlqfatt6d6nw53qheknzh"]
+    # Список публичных ключей (можно несколько)
+    recipients = [
+        "age1838zmykps32gmczv2l0w9gw0z9evu06565atvqlqfatt6d6nw53qheknzh"
+    ]
 
-# --- Условная настройка для Windows ---
+# --- Настройки для Windows ---
 {{- if eq .chezmoi.os "windows" }}
+# При переходе в source-директорию используем PowerShell
 [cd]
     command = "pwsh"
     args = ["-NoExit"]
