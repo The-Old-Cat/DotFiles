@@ -18,7 +18,7 @@ if (Get-Command starship -ErrorAction SilentlyContinue) {
 
 # --- Zoxide (умный cd) ---
 if (Get-Command zoxide -ErrorAction SilentlyContinue) {
-    Invoke-Expression (&zoxide init powershell)
+    Invoke-Expression (&zoxide init powershell | Out-String)
 }
 
 # --- PSReadLine (удобный ввод) ---
