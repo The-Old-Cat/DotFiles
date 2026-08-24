@@ -12,15 +12,9 @@ export HISTSIZE=50000
 export HISTFILESIZE=100000
 shopt -s histappend
 
-# === True Color Palette ===
-C_RESET='\[\033[0m\]'
-C_ORANGE='\[\033[38;2;255;165;0m\]'   # Pop!_OS Orange / Accent
-C_BLUE='\[\033[38;2;135;206;235m\]'   # Sky Blue (Paths)
-C_GREEN='\[\033[38;2;138;229;138m\]'  # Soft Green (User)
-C_RED='\[\033[38;2;255;85;85m\]'      # Soft Red (Root)
-C_YELLOW='\[\033[38;2;241;250;140m\]' # Pastel Yellow (Frames/Git)
-C_CYAN='\[\033[38;2;139;233;253m\]'   # Light Cyan (IPs)
-C_GRAY='\[\033[38;2;100;114;164m\]'   # Comment Gray
+# === True Color Palette (для ANSI-вывода echo) ===
+C_RESET='\033[0m'
+C_CYAN='\033[38;2;139;233;253m'
 
 # === Функции ===
 get_local_ip() { hostname -I 2>/dev/null | awk '{print $1}' || echo "n/a"; }
@@ -57,12 +51,14 @@ if [[ $- == *i* ]] && [ -z "$TMUX" ]; then
     print_banner
 fi
 
-# === Инициализация Starship (переопределяет PS1) ===
+# === Инициализация Starship ===
+export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+
 if command -v starship >/dev/null 2>&1; then
     eval "$(starship init bash)"
 fi
 
-# === Алиасы (Универсальные) ===
+# === Алиасы ===
 alias ll='ls -alFh --color=auto'
 alias la='ls -A --color=auto'
 alias grep='grep --color=auto'

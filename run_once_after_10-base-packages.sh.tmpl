@@ -38,6 +38,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     echo "Installing common packages..."
     sudo apt-get install -y --no-install-recommends \
         git \
+        lsd \
         curl \
         wget \
         htop \
