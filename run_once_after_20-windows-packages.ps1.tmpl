@@ -108,8 +108,8 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     }
 
     # --- Шрифты Nerd Fonts ---
-    Write-Host "Installing Cascadia-Code..."
-    scoop install Cascadia-Code | Out-Null
+    Write-Host "Installing nerd-fonts..."
+    scoop install Cascadia-Code JetBrainsMono-NF JetBrainsMono-NF-Mono | Out-Null
 
     # --- Проверка конфига Alacritty (управляется chezmoi через AppData/Roaming) ---
     $alacrittyConfig = "$env:APPDATA\alacritty\alacritty.toml"
