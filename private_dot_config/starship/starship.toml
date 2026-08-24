@@ -1,11 +1,5 @@
-# ~/.config/starship/starship.toml
-# Конфигурация Starship
-
-# --- Схема конфига ---
 "$schema" = 'https://starship.rs/config-schema.json'
 
-# --- Формат промпта ---
-# Используются блоки с разделителями  и  для создания "ступенек"
 format = """
 [](color_orange)\
 $os\
@@ -36,49 +30,47 @@ $time\
 [](fg:color_bg1)\
 \n$line_break$character"""
 
-# --- Палитра цветов (Gruvbox Dark) ---
 palette = 'gruvbox_dark'
 
 [palettes.gruvbox_dark]
-color_fg0 = '#fbf1c7'    # Светлый текст
-color_bg1 = '#3c3836'    # Тёмный фон 1
-color_bg3 = '#665c54'    # Тёмный фон 2
-color_blue = '#458588'   # Синий
-color_aqua = '#689d6a'   # Зелёный/аква
-color_green = '#98971a'  # Ярко-зелёный
-color_orange = '#d65d0e' # Оранжевый
-color_purple = '#b16286' # Фиолетовый
-color_red = '#cc241d'    # Красный
-color_yellow = '#d79921' # Жёлтый
+color_fg0 = '#fbf1c7'
+color_bg1 = '#3c3836'
+color_bg3 = '#665c54'
+color_blue = '#458588'
+color_aqua = '#689d6a'
+color_green = '#98971a'
+color_orange = '#d65d0e'
+color_purple = '#b16286'
+color_red = '#cc241d'
+color_yellow = '#d79921'
 
-# --- Модуль: Операционная система ---
 [os]
 disabled = false
 style = "bg:color_orange fg:color_fg0"
 
 [os.symbols]
-Windows = "⊞ "          # Иконка Windows
-Ubuntu = " "           # Иконка Ubuntu
-SUSE = " "             # Иконка SUSE
-Raspbian = " "         # Иконка Raspbian
-Mint = " "             # Иконка Linux Mint
-Macos = " "            # Иконка macOS
-Manjaro = " "          # Иконка Manjaro
-Linux = " "            # Иконка Linux (общая)
-Gentoo = " "           # Иконка Gentoo
-Fedora = " "           # Иконка Fedora
-Alpine = " "           # Иконка Alpine
-Amazon = " "           # Иконка Amazon Linux
-Android = " "          # Иконка Android
-AOSC = " "             # Иконка AOSC
-Arch = " "             # Иконка Arch Linux
-Artix = " "            # Иконка Artix
-EndeavourOS = " "      # Иконка EndeavourOS
-CentOS = " "           # Иконка CentOS
-Debian = " "           # Иконка Debian
-Redhat = " "           # Иконка Red Hat
-RedHatEnterprise = " " # Иконка RHEL
-Pop = " "              # Иконка Pop!_OS
+Windows = "󰍲"
+Ubuntu = "󰕈"
+SUSE = ""
+Raspbian = "󰐿"
+Mint = "󰣭"
+Macos = "󰀵"
+Manjaro = ""
+Linux = "󰌽"
+Gentoo = "󰣨"
+Fedora = "󰣛"
+Alpine = ""
+Amazon = ""
+Android = ""
+AOSC = ""
+Arch = "󰣇"
+Artix = "󰣇"
+EndeavourOS = ""
+CentOS = ""
+Debian = "󰣚"
+Redhat = "󱄛"
+RedHatEnterprise = "󱄛"
+Pop = ""
 
 # --- Модуль: Имя пользователя ---
 [username]
