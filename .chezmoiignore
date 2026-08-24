@@ -7,4 +7,5 @@ run_once_after_10-base-packages.sh
 {{- if eq .chezmoi.os "linux" }}
 run_once_after_20-windows-packages.ps1
 20-windows-packages.ps1
+Documents/PowerShell/Microsoft.PowerShell_profile.ps1
 {{- end }}
