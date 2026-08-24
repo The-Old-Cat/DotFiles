@@ -3,59 +3,127 @@
 
 $ErrorActionPreference = "Stop"
 
+# --- Установка Age через scoop ---
 function Install-Age {
-    if (Get-Command age-keygen -ErrorAction SilentlyContinue) { return }
-    Write-Host "Installing age..."
-    if (Get-Command scoop -ErrorAction SilentlyContinue) {
-        scoop install age 2>&1 | Out-Null
+    if (Get-Command age-keygen -ErrorAction SilentlyContinue) {
+        Write-Host "age is already installed."
+        return
     }
-    if (-not (Get-Command age-keygen -ErrorAction SilentlyContinue)) {
-        # fallback: официальный релиз FiloSottile/age
-        $rel = Invoke-RestMethod "https://api.github.com/repos/FiloSottile/age/releases/latest"
-        $url = ($rel.assets | Where-Object { $_.name -match "windows-amd64\.zip" } | Select-Object -First 1).browser_download_url
-        Invoke-WebRequest $url -OutFile "$env:TEMP\age.zip"
-        Expand-Archive "$env:TEMP\age.zip" -DestinationPath "$env:TEMP\age" -Force
-        $bin = "$env:USERPROFILE\.local\bin"
-        New-Item -ItemType Directory -Force $bin | Out-Null
-        $exe = Get-ChildItem "$env:TEMP\age" -Recurse -Filter "age.exe" | Select-Object -First 1
-        Copy-Item $exe.FullName, (Join-Path $exe.DirectoryName "age-keygen.exe") $bin -Force
-        $u = [Environment]::GetEnvironmentVariable("PATH", "User")
-        if ($u -notlike "*$bin*") { [Environment]::SetEnvironmentVariable("PATH", "$u;$bin", "User") }
-        Remove-Item "$env:TEMP\age.zip", "$env:TEMP\age" -Recurse -Force
+
+    Write-Host "Installing age via scoop..."
+
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+        Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
+        return
     }
-    if (Get-Command age-keygen -ErrorAction SilentlyContinue) { Write-Host "age OK" }
-    else { Write-Warning "age install FAILED" }
+
+    scoop install age | Out-Null
+    Write-Host "age installed successfully."
 }
 
+# --- Основной блок ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    Write-Host "Using scoop..."
+    Write-Host "Using scoop for package installation..."
+
+    # Добавляем необходимые buckets (один раз)
+    $buckets = (scoop bucket list 2>$null).Name
+
+    if ($buckets -notcontains "extras") {
+        Write-Host "Adding 'extras' bucket..."
+        scoop bucket add extras | Out-Null
+    }
+
+    if ($buckets -notcontains "nerd-fonts") {
+        Write-Host "Adding 'nerd-fonts' bucket..."
+        scoop bucket add nerd-fonts | Out-Null
+    }
+
+    if ($buckets -notcontains "sysinternals") {
+        Write-Host "Adding 'sysinternals' bucket..."
+        scoop bucket add sysinternals | Out-Null
+    }
+
+    # Устанавливаем age (после добавления buckets)
+    Install-Age
+
     $packages = @(
-        "git", "gh", "fd", "ripgrep", "fzf", "restic",
-        "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
-        "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip"
-    )
+    # Основные инструменты
+    "git", "gh", "fd", "ripgrep", "fzf", "restic",
+    "windows-terminal", "alacritty", "uv", "advanced-ip-scanner",
+    "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip",
+
+    # CLI-улучшения
+    "jq", "yq",
+    "zoxide",
+    "dust",
+    "procs",
+    "bat",
+    "starship",
+
+    # Сеть / утилиты
+    "nmap",
+    "curlie",
+    "wget",
+    "yt-dlp",
+    "ffmpeg",
+
+    # Безопасность / продуктивность
+    "bitwarden-cli",
+    "obsidian",
+    "flow-launcher",
+
+    # Разработка
+    "nodejs-lts",
+    "go",
+
+    # Sysinternals
+    "procexp",
+    "autoruns",
+    "tcpview",
+    "handle",
+    "du",
+    "procmon",
+    "psservice",
+    "rammap",
+    "sysmon"
+)
+
     foreach ($pkg in $packages) {
         Write-Host "Installing $pkg..."
         scoop install $pkg 2>&1 | Out-Null
     }
-    Install-Age
 
-    # VS Code: контекстное меню
+    # --- Регистрация VS Code в системе ---
+    Write-Host "Registering VS Code in system..."
     $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
+
     if (Test-Path $vscodePath) {
         reg import "$vscodePath\install-context.reg" 2>&1 | Out-Null
         reg import "$vscodePath\install-associations.reg" 2>&1 | Out-Null
-        Write-Host "VS Code registered"
+        reg import "$vscodePath\install-github-integration.reg" 2>&1 | Out-Null
+        Write-Host "✓ VS Code registered"
+    }
+    else {
+        Write-Warning "VS Code not found at $vscodePath"
     }
 
-    # Шрифты
-    $buckets = (scoop bucket list 2>$null).Name
-    if ($buckets -notcontains "nerd-fonts") { scoop bucket add nerd-fonts | Out-Null }
-    scoop install Hasklig-NF 2>&1 | Out-Null
-    Write-Host "Windows packages installed"
+    # --- Шрифты Nerd Fonts ---
+    Write-Host "Installing Hasklig-NF..."
+    scoop install Hasklig-NF | Out-Null
+
+    # --- Проверка конфига Alacritty (управляется chezmoi через AppData/Roaming) ---
+    $alacrittyConfig = "$env:APPDATA\alacritty\alacritty.toml"
+    if (Test-Path $alacrittyConfig) {
+        Write-Host "✓ Alacritty config is present in AppData"
+    }
+    else {
+        Write-Warning "Alacritty config not found in AppData. Run 'chezmoi apply' if needed."
+    }
+
+    Write-Host "All Windows packages installed via scoop."
 }
 else {
-    Write-Warning "Scoop not installed: iwr -useb get.scoop.sh | iex"
+    Write-Warning "Scoop is not installed. Please run: iwr -useb get.scoop.sh | iex"
 }
 
 {{- end }}

@@ -1,0 +1,63 @@
+# Microsoft.PowerShell_profile.ps1.tmpl
+# Управляется через chezmoi — не редактируйте вручную
+
+{{- if eq .chezmoi.os "windows" }}
+
+# ============================================================
+#  PowerShell Profile (Windows)
+# ============================================================
+
+# --- Encoding ---
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
+# --- Starship Prompt ---
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&starship init powershell)
+}
+
+# --- Zoxide (умный cd) ---
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (&zoxide init powershell)
+}
+
+# --- PSReadLine (удобный ввод) ---
+if (Get-Module -ListAvailable PSReadLine) {
+    Import-Module PSReadLine
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle ListView
+    Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
+}
+
+# --- Полезные алиасы ---
+Set-Alias -Name g   -Value git          -ErrorAction SilentlyContinue
+Set-Alias -Name lg  -Value lazygit      -ErrorAction SilentlyContinue
+Set-Alias -Name cat -Value bat          -ErrorAction SilentlyContinue
+Set-Alias -Name grep -Value rg          -ErrorAction SilentlyContinue
+Set-Alias -Name which -Value Get-Command -ErrorAction SilentlyContinue
+
+# eza / lsd как ls (если установлены)
+if (Get-Command eza -ErrorAction SilentlyContinue) {
+    function ls { eza --icons --group-directories-first @args }
+    function ll { eza -l --icons --group-directories-first @args }
+    function la { eza -la --icons --group-directories-first @args }
+}
+elseif (Get-Command lsd -ErrorAction SilentlyContinue) {
+    function ls { lsd --group-directories-first @args }
+    function ll { lsd -l --group-directories-first @args }
+    function la { lsd -la --group-directories-first @args }
+}
+
+# --- Переменные окружения ---
+$env:EDITOR = "code"
+$env:VISUAL = "code"
+
+# Starship config
+$env:STARSHIP_CONFIG = "$HOME\.config\starship\starship.toml"
+
+
+# --- Приветствие (опционально) ---
+# Write-Host "PowerShell $($PSVersionTable.PSVersion) | $(Get-Date -Format 'yyyy-MM-dd HH:mm')" -ForegroundColor DarkGray
+
+{{- end }}
