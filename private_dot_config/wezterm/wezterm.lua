@@ -30,24 +30,19 @@ c.enable_tab_bar = false
 
 -- --- Клавиатура ---
 c.keys = {
-    -- Копировать (Ctrl+C)
-    { key = 'C', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
-    { key = 'с', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
-    -- Копировать (Ctrl+Insert)
+    -- Копировать (Ctrl+C / Ctrl+Insert) — физическая клавиша C
+    { key = 'c', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
     { key = 'Insert', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
 
-    -- Вставить (Ctrl+V) и для русской раскладки (Ctrl+М)
-    { key = 'V', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
-    { key = 'М', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
-    -- Вставить (Shift+Insert)
+    -- Вставить (Ctrl+V / Shift+Insert) — физическая клавиша V (работает и для Ctrl+М)
+    { key = 'v', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
     { key = 'Insert', mods = 'SHIFT', action = wezterm.action.PasteFrom 'Clipboard' },
 
-    -- Закрыть окно (Ctrl+Shift+Q)
-    { key = 'Q', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
-    -- Закрыть окно (Ctrl+W)
-    { key = 'W', mods = 'CTRL', action = wezterm.action.QuitApplication },
-    -- Закрыть окно для русской раскладки (Ctrl+Shift+Й)
-    { key = 'Й', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+    -- Закрыть терминал (Ctrl+Shift+Q) — физическая клавиша Q (работает и для Ctrl+Shift+Й)
+    { key = 'q', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+
+    -- Закрыть вкладку/окно (Ctrl+W) — физическая клавиша W (работает и для Ctrl+Ц)
+    { key = 'w', mods = 'CTRL', action = wezterm.action.QuitApplication },
 
     -- Увеличение шрифта
     { key = '=', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
@@ -63,13 +58,9 @@ c.keys = {
     { key = '0', mods = 'CTRL', action = wezterm.action.ResetFontSize },
     { key = '0', mods = 'CTRL|SHIFT', action = wezterm.action.ResetFontSize },
 
-    -- Полноэкранный режим (Ctrl+Shift+F)
-    { key = 'F', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
-    -- Полноэкранный режим для русской раскладки (Ctrl+Shift+А)
-    { key = 'А', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
-
+    -- Полноэкранный режим (Ctrl+Shift+F) — физическая клавиша F (работает и для Ctrl+Shift+А)
+    { key = 'f', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
 }
-
 -- --- Мышь ---
 c.mouse_bindings = {
     -- Правый клик = вставка
