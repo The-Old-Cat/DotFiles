@@ -17,6 +17,7 @@ c.color_scheme = 'Tokyo Night'
 -- --- Окно ---
 c.window_background_opacity = 0.92
 c.window_decorations = 'RESIZE'
+c.window_close_confirmation = 'NeverPrompt' -- <--- Закрытие без диалога
 c.window_padding = {
     left = 10,
     right = 10,
