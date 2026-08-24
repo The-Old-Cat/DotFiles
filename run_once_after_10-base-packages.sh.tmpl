@@ -4,6 +4,7 @@
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
+
 # 1. Создаем директорию для шрифта
 mkdir -p ~/.local/share/fonts/jetbrains-mono
 
@@ -125,24 +126,6 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         pve-manager-tools \
         qemu-guest-agent
     {{- end }}
-
-    # --- Установка шрифта (только если НЕ WSL) ---
-    if [ "$IS_WSL" = false ]; then
-        if ! fc-list | grep -qi "jetbrainsmono"; then
-            echo "Installing JetBrainsMono Nerd Font..."
-            mkdir -p ~/.local/share/fonts/jetbrains-mono
-            curl -fLo /tmp/JetBrainsMono.zip \
-                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-            unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
-            rm -f /tmp/JetBrainsMono.zip
-            fc-cache -f ~/.local/share/fonts >/dev/null
-            echo "✓ JetBrainsMono Nerd Font installed"
-        else
-            echo "✓ JetBrainsMono Nerd Font already installed"
-        fi
-    else
-        echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
-    fi
 
 
     # --- Настройка .bashrc и системной конфигурации для WSL ---
