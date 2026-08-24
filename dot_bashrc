@@ -1,4 +1,4 @@
-# ~/.bashrc - Universal Config for Lior
+# ~/.bashrc - Universal Config
 
 # === Защита от неинтерактивных сессий ===
 case $- in
@@ -6,16 +6,11 @@ case $- in
       *) return;;
 esac
 
-parse_git_branch() {
-    git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
-}
-
 # === История ===
 export HISTCONTROL=ignoreboth:erasedups
 export HISTSIZE=50000
 export HISTFILESIZE=100000
 shopt -s histappend
-
 
 # === True Color Palette ===
 C_RESET='\[\033[0m\]'
@@ -56,30 +51,16 @@ print_banner() {
     echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
     echo -e ""
 }
+
 # Запуск баннера только если это интерактивная сессия и не tmux
 if [[ $- == *i* ]] && [ -z "$TMUX" ]; then
     print_banner
 fi
 
-
-# === Определение цвета пользователя ===
-if [ "$USER" = "root" ]; then
-    USER_COLOR=$C_RED
-    SYMBOL='#'
-else
-    USER_COLOR=$C_GREEN
-    SYMBOL='$'
+# === Инициализация Starship (переопределяет PS1) ===
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
 fi
-
-# === Двухстрочный PS1 с рамками и True Color ===
-# Строка 1: IP-адреса (Сверху, как заголовок)
-# Строка 2: Рамка с хостом, временем и путем
-# Строка 3: Символ промпта
-
-PS1="\n🏠${C_CYAN} Local IP: \$(get_local_ip) ${C_GRAY}| 🌐${C_CYAN} External IP: \$(cached_external_ip)${C_RESET}\n"
-PS1+="${C_YELLOW}┌──(${C_RESET}${USER_COLOR}\h${C_YELLOW})──[TIME: \t${C_YELLOW}]──${C_RESET}${C_BLUE}[\w]${C_YELLOW}\$(parse_git_branch)${C_RESET}\n"
-PS1+="${C_YELLOW}│\n└─${USER_COLOR}{\u}${C_YELLOW}──>${C_RESET}${USER_COLOR}${SYMBOL}${C_RESET} "
-
 
 # === Алиасы (Универсальные) ===
 alias ll='ls -alFh --color=auto'
@@ -89,7 +70,7 @@ alias df='df -h'
 alias du='du -h --max-depth=1'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias myip='echo "Ext: $(get_cached_ext_ip) | Loc: $(get_local_ip)"'
+alias myip='echo "Ext: $(cached_external_ip) | Loc: $(get_local_ip)"'
 
 export PATH="$HOME/.local/bin:$PATH"
 export TERM=xterm-256color
