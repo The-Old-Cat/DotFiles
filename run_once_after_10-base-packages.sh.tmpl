@@ -54,7 +54,8 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # --- Установка пакетов в зависимости от окружения ---
     if [ "$IS_WSL" = false ]; then
         echo "Installing native Linux packages..."
-        sudo apt-get install -y --no-install-recommends wezterm\
+        sudo apt-get install -y --no-install-recommends \
+            wezterm \
             alacritty \
             starship \
             flameshot \
