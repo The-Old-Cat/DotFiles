@@ -8,6 +8,14 @@ encryption = "age"
     name = "The-Old-Cat"
     email = "artkov476@gmail.com"
 
+
 [age]
     identity = "{{ .chezmoi.homeDir }}/.config/age/key.txt"
     recipients = ["age1838zmykps32gmczv2l0w9gw0z9evu06565atvqlqfatt6d6nw53qheknzh"]
+
+# --- Условная настройка для Windows ---
+{{- if eq .chezmoi.os "windows" }}
+[cd]
+    command = "pwsh"
+    args = ["-NoExit"]
+{{- end }}
