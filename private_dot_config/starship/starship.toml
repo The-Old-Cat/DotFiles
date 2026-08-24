@@ -57,28 +57,28 @@ disabled = false
 style = "bg:color_orange fg:color_fg0"
 
 [os.symbols]
-Windows = "󰍲"           # Иконка Windows
-Ubuntu = " "           # Иконка Ubuntu
-SUSE = " "             # Иконка SUSE
-Raspbian = " "         # Иконка Raspbian
-Mint = " "             # Иконка Linux Mint
-Macos = " "            # Иконка macOS
-Manjaro = " "          # Иконка Manjaro
-Linux = " "            # Иконка Linux (общая)
-Gentoo = " "           # Иконка Gentoo
-Fedora = " "           # Иконка Fedora
-Alpine = " "           # Иконка Alpine
-Amazon = " "           # Иконка Amazon Linux
-Android = " "          # Иконка Android
-AOSC = " "             # Иконка AOSC
-Arch = " "             # Иконка Arch Linux
-Artix = " "            # Иконка Artix
-EndeavourOS = " "      # Иконка EndeavourOS
-CentOS = " "           # Иконка CentOS
-Debian = " "           # Иконка Debian
-Redhat = " "           # Иконка Red Hat
-RedHatEnterprise = " " # Иконка RHEL
-Pop = " "              # Иконка Pop!_OS
+Windows = "󰍲"          # Иконка Windows
+Ubuntu = " "          # Иконка Ubuntu
+SUSE = " "            # Иконка SUSE
+Raspbian = " "        # Иконка Raspbian
+Mint = " "            # Иконка Linux Mint
+Macos = " "           # Иконка macOS
+Manjaro = " "         # Иконка Manjaro
+Linux = " "           # Иконка Linux (общая)
+Gentoo = " "          # Иконка Gentoo
+Fedora = " "          # Иконка Fedora
+Alpine = " "          # Иконка Alpine
+Amazon = " "          # Иконка Amazon Linux
+Android = " "         # Иконка Android
+AOSC = " "            # Иконка AOSC
+Arch = " "            # Иконка Arch Linux
+Artix = " "           # Иконка Artix
+EndeavourOS = " "     # Иконка EndeavourOS
+CentOS = " "          # Иконка CentOS
+Debian = " "          # Иконка Debian
+Redhat = "󱄛"           # Иконка Red Hat
+RedHatEnterprise = "󱄛" # Иконка RHEL
+Pop = " "             # Иконка Pop!_OS
 
 # --- Модуль: Имя пользователя ---
 [username]
