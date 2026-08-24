@@ -32,7 +32,8 @@ c.enable_tab_bar = false
 c.keys = {
     -- Копировать (Ctrl+C)
     { key = 'C', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
-    -- Копировать (Ctrl+Insert) для русской раскладки
+    { key = 'с', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
+    -- Копировать (Ctrl+Insert)
     { key = 'Insert', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
 
     -- Вставить (Ctrl+V) и для русской раскладки (Ctrl+М)
@@ -43,15 +44,16 @@ c.keys = {
 
     -- Закрыть окно (Ctrl+Shift+Q)
     { key = 'Q', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
-    -- Закрыть окно (Ctrl+W) для тех, кто привык к браузерам
+    -- Закрыть окно (Ctrl+W)
     { key = 'W', mods = 'CTRL', action = wezterm.action.QuitApplication },
-    -- Закрыть окно (Ctrl+Shift+Й) для русской раскладки
+    -- Закрыть окно для русской раскладки (Ctrl+Shift+Й)
     { key = 'Й', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
 
     -- Увеличение шрифта
     { key = '=', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
     { key = '+', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
     { key = '=', mods = 'CTRL|SHIFT', action = wezterm.action.IncreaseFontSize },
+    { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.IncreaseFontSize },
 
     -- Уменьшение шрифта
     { key = '-', mods = 'CTRL', action = wezterm.action.DecreaseFontSize },
@@ -66,11 +68,6 @@ c.keys = {
     -- Полноэкранный режим для русской раскладки (Ctrl+Shift+А)
     { key = 'А', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
 
-    -- Поиск (Ctrl+Shift+F)
-    { key = 'F', mods = 'CTRL|SHIFT', action = wezterm.action.Search },
-
-    -- Новая вкладка (если включить табы)
-    { key = 'T', mods = 'CTRL|SHIFT', action = wezterm.action.SpawnTab 'CurrentPaneDomain' },
 }
 
 -- --- Мышь ---
