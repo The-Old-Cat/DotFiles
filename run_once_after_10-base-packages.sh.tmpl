@@ -56,17 +56,20 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "Installing native Linux packages..."
         sudo apt-get install -y --no-install-recommends \
             wezterm \
-            alacritty \
             starship \
             flameshot \
             xclip
     else
         echo "Installing WSL-specific packages..."
-        echo "Installing Docker for WSL..."
         sudo apt-get install -y --no-install-recommends \
             docker.io \
             docker-compose-v2 \
-            dos2unix
+            dos2unix \
+            wsl-open \
+            wslpath \
+            x11-apps \
+            dbus-user-session
+
         # Добавляем пользователя в группу docker
         sudo usermod -aG docker $USER
         echo "✓ Docker installed. You may need to restart your WSL session."
@@ -129,29 +132,22 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
     fi
 
-    # --- Проверка конфига Alacritty (только если НЕ WSL) ---
-    if [ "$IS_WSL" = false ]; then
-        if [ -f ~/.config/alacritty/alacritty.toml ]; then
-            echo "✓ Alacritty config is present in ~/.config/alacritty"
-        else
-            echo "⚠️ Alacritty config not found. Run 'chezmoi apply' if needed."
-        fi
-    else
-        echo "Skipping Alacritty check (running in WSL, config is managed on Windows)"
-    fi
 
-    # --- Проверка Starship (только если НЕ WSL) ---
-    if [ "$IS_WSL" = false ]; then
-        if command -v starship >/dev/null 2>&1; then
-            echo "✓ Starship installed"
-            starship --version
-        else
-            echo "⚠️ Starship not found. Run 'scoop install starship' on Windows or 'apt install starship' on Linux"
-        fi
-    fi
-
-    # --- Настройка .bashrc для WSL (добавляем alias'ы) ---
+    # --- Настройка .bashrc и системной конфигурации для WSL ---
     if [ "$IS_WSL" = true ]; then
+
+        # Включение systemd и автоматической интерактивности межсетевых путей
+        if [ -f /etc/wsl.conf ]; then
+            if ! grep -q "systemd=true" /etc/wsl.conf; then
+                echo -e "\n[boot]\nsystemd=true" | sudo tee -a /etc/wsl.conf > /dev/null
+                echo "✓ Enabled systemd in /etc/wsl.conf"
+            fi
+        else
+            echo -e "[boot]\nsystemd=true\n\n[interop]\nappendWindowsPath=true" | sudo tee /etc/wsl.conf > /dev/null
+            echo "✓ Created /etc/wsl.conf with systemd enabled"
+        fi
+
+        # Расширенный набор псевдонимов для работы с файлами и буфером Windows
         if ! grep -q "# WSL aliases" ~/.bashrc 2>/dev/null; then
             cat >> ~/.bashrc << 'EOF'
 
@@ -159,6 +155,9 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 alias explorer="explorer.exe"
 alias code="code.exe"
 alias pwsh="pwsh.exe"
+alias open="wsl-open"
+alias clip="clip.exe"
+alias wclip="powershell.exe -command Get-Clipboard"
 EOF
             echo "✓ Added WSL aliases to .bashrc"
         fi
