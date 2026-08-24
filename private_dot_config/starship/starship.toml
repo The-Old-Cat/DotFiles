@@ -1,5 +1,11 @@
+# ~/.config/starship/starship.toml
+# Конфигурация Starship
+
+# --- Схема конфига ---
 "$schema" = 'https://starship.rs/config-schema.json'
 
+# --- Формат промпта ---
+# Используются блоки с разделителями  и  для создания "ступенек"
 format = """
 [](color_orange)\
 $os\
@@ -30,158 +36,189 @@ $time\
 [](fg:color_bg1)\
 \n$line_break$character"""
 
+# --- Палитра цветов (Gruvbox Dark) ---
 palette = 'gruvbox_dark'
 
 [palettes.gruvbox_dark]
-color_fg0 = '#fbf1c7'
-color_bg1 = '#3c3836'
-color_bg3 = '#665c54'
-color_blue = '#458588'
-color_aqua = '#689d6a'
-color_green = '#98971a'
-color_orange = '#d65d0e'
-color_purple = '#b16286'
-color_red = '#cc241d'
-color_yellow = '#d79921'
+color_fg0 = '#fbf1c7'    # Светлый текст
+color_bg1 = '#3c3836'    # Тёмный фон 1
+color_bg3 = '#665c54'    # Тёмный фон 2
+color_blue = '#458588'   # Синий
+color_aqua = '#689d6a'   # Зелёный/аква
+color_green = '#98971a'  # Ярко-зелёный
+color_orange = '#d65d0e' # Оранжевый
+color_purple = '#b16286' # Фиолетовый
+color_red = '#cc241d'    # Красный
+color_yellow = '#d79921' # Жёлтый
 
+# --- Модуль: Операционная система ---
 [os]
 disabled = false
 style = "bg:color_orange fg:color_fg0"
 
 [os.symbols]
-Windows = "󰍲"
-Ubuntu = "󰕈"
-SUSE = ""
-Raspbian = "󰐿"
-Mint = "󰣭"
-Macos = "󰀵"
-Manjaro = ""
-Linux = "󰌽"
-Gentoo = "󰣨"
-Fedora = "󰣛"
-Alpine = ""
-Amazon = ""
-Android = ""
-AOSC = ""
-Arch = "󰣇"
-Artix = "󰣇"
-EndeavourOS = ""
-CentOS = ""
-Debian = "󰣚"
-Redhat = "󱄛"
-RedHatEnterprise = "󱄛"
-Pop = ""
+Windows = "⊞ "          # Иконка Windows
+Ubuntu = " "           # Иконка Ubuntu
+SUSE = " "             # Иконка SUSE
+Raspbian = " "         # Иконка Raspbian
+Mint = " "             # Иконка Linux Mint
+Macos = " "            # Иконка macOS
+Manjaro = " "          # Иконка Manjaro
+Linux = " "            # Иконка Linux (общая)
+Gentoo = " "           # Иконка Gentoo
+Fedora = " "           # Иконка Fedora
+Alpine = " "           # Иконка Alpine
+Amazon = " "           # Иконка Amazon Linux
+Android = " "          # Иконка Android
+AOSC = " "             # Иконка AOSC
+Arch = " "             # Иконка Arch Linux
+Artix = " "            # Иконка Artix
+EndeavourOS = " "      # Иконка EndeavourOS
+CentOS = " "           # Иконка CentOS
+Debian = " "           # Иконка Debian
+Redhat = " "           # Иконка Red Hat
+RedHatEnterprise = " " # Иконка RHEL
+Pop = " "              # Иконка Pop!_OS
 
+# --- Модуль: Имя пользователя ---
 [username]
 show_always = true
 style_user = "bg:color_orange fg:color_fg0"
 style_root = "bg:color_orange fg:color_fg0"
 format = '[ $user ]($style)'
 
+# --- Модуль: Текущая директория ---
 [directory]
 style = "fg:color_fg0 bg:color_yellow"
 format = "[ $path ]($style)"
-truncation_length = 3
-truncation_symbol = "…/"
+truncation_length = 3                  # Показывать 3 последние папки
+truncation_symbol = "…/"               # Символ сокращения
+home_symbol = "~"                      # Символ домашней папки
 
+# --- Замена имён папок на иконки ---
 [directory.substitutions]
-"Documents" = "󰈙 "
-"Downloads" = " "
-"Music" = "󰝚 "
-"Pictures" = " "
-"Developer" = "󰲋 "
+"Documents" = "📄 "  # Документы
+"Downloads" = "⬇️ " # Загрузки
+"Music" = "🎵 "      # Музыка
+"Pictures" = "🖼️ "  # Изображения
+"Developer" = "💻 "  # Разработка
 
+# --- Модуль: Git ветка ---
 [git_branch]
-symbol = ""
+symbol = " "                                                        # Иконка ветки
 style = "bg:color_aqua"
 format = '[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
 
+# --- Модуль: Git статус ---
 [git_status]
 style = "bg:color_aqua"
 format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)]($style)'
 
+# --- Модули: Языки программирования ---
+# Node.js
 [nodejs]
-symbol = ""
+symbol = " "                                                           # Иконка Node.js
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Bun
 [bun]
-symbol = ""
+symbol = " "                                                           # Иконка Bun
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# C
 [c]
-symbol = " "
+symbol = " "                                                           # Иконка C
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# C++
 [cpp]
-symbol = " "
+symbol = " "                                                           # Иконка C++
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Rust
 [rust]
-symbol = ""
+symbol = " "                                                           # Иконка Rust
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Golang
 [golang]
-symbol = ""
+symbol = " "                                                           # Иконка Go
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# PHP
 [php]
-symbol = ""
+symbol = " "                                                           # Иконка PHP
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Java
 [java]
-symbol = ""
+symbol = " "                                                           # Иконка Java
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Kotlin
 [kotlin]
-symbol = ""
+symbol = " "                                                           # Иконка Kotlin
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Haskell
 [haskell]
-symbol = ""
+symbol = " "                                                           # Иконка Haskell
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# Python
 [python]
-symbol = ""
+symbol = " "                                                           # Иконка Python
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
+# --- Модуль: Docker контекст ---
 [docker_context]
-symbol = ""
+symbol = " "                                                        # Иконка Docker
 style = "bg:color_bg3"
 format = '[[ $symbol( $context) ](fg:#83a598 bg:color_bg3)]($style)'
 
+# --- Модуль: Conda окружение ---
 [conda]
 style = "bg:color_bg3"
 format = '[[ $symbol( $environment) ](fg:#83a598 bg:color_bg3)]($style)'
 
+# --- Модуль: Pixi окружение ---
 [pixi]
 style = "bg:color_bg3"
 format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_bg3)]($style)'
 
+# --- Модуль: Время ---
 [time]
 disabled = false
-time_format = "%R"
+time_format = "%R"                                          # Формат HH:MM
 style = "bg:color_bg1"
-format = '[[  $time ](fg:color_fg0 bg:color_bg1)]($style)'
+format = '[[  $time ](fg:color_fg0 bg:color_bg1)]($style)'
 
+# --- Модуль: Перенос строки ---
 [line_break]
 disabled = false
 
+# --- Модуль: Символ ввода команды ---
 [character]
 disabled = false
+# └──> для успешных команд (зелёный)
 success_symbol = '[ ╰─> ](bold fg:color_aqua)'
+# └──> для ошибочных команд (красный)
 error_symbol = '[ ╰─> ](bold fg:color_red)'
-vimcmd_symbol = '[ ](bold fg:color_green)'
-vimcmd_replace_one_symbol = '[ ](bold fg:color_purple)'
-vimcmd_replace_symbol = '[ ](bold fg:color_purple)'
-vimcmd_visual_symbol = '[ ](bold fg:color_yellow)'
+# Режим Vim (вставка)
+vimcmd_symbol = '[  ](bold fg:color_green)'
+# Режим Vim (замена)
+vimcmd_replace_one_symbol = '[  ](bold fg:color_purple)'
+vimcmd_replace_symbol = '[  ](bold fg:color_purple)'
+# Режим Vim (визуальный)
+vimcmd_visual_symbol = '[  ](bold fg:color_yellow)'
