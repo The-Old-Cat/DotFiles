@@ -86,20 +86,61 @@ c.keys = {
 
 -- --- Мышь ---
 c.mouse_bindings = {
-    -- Выделение мышью = автоматическое копирование
+    -- Левый клик: начало выделения
+    {
+        event = { Down = { streak = 1, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.SelectTextAtMouseCursor 'Cell',
+    },
+    -- Двойной клик: выделение слова
+    {
+        event = { Down = { streak = 2, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.SelectTextAtMouseCursor 'Word',
+    },
+    -- Тройной клик: выделение всей строки
+    {
+        event = { Down = { streak = 3, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.SelectTextAtMouseCursor 'Line',
+    },
+
+    -- Тянем: расширение выделения
+    {
+        event = { Drag = { streak = 1, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.ExtendSelectionToMouseCursor 'Cell',
+    },
+
+    -- Отпустили ЛКМ: копирование в Clipboard (или переход по ссылке, если кликнули по URL)
     {
         event = { Up = { streak = 1, button = 'Left' } },
         mods = 'NONE',
+        action = wezterm.action.CompleteSelectionOrOpenLinkAtMouseCursor 'Clipboard',
+    },
+    {
+        event = { Up = { streak = 2, button = 'Left' } },
+        mods = 'NONE',
         action = wezterm.action.CompleteSelection 'Clipboard',
     },
-    -- Правый клик = вставка
+    {
+        event = { Up = { streak = 3, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.CompleteSelection 'Clipboard',
+    },
+
+    -- Средняя и правая кнопки: вставка
+    {
+        event = { Down = { streak = 1, button = 'Middle' } },
+        mods = 'NONE',
+        action = wezterm.action.PasteFrom 'Clipboard',
+    },
     {
         event = { Down = { streak = 1, button = 'Right' } },
         mods = 'NONE',
         action = wezterm.action.PasteFrom 'Clipboard',
     },
 }
-
 -- --- Оболочка ---
 if wezterm.target_triple:find('windows') then
     c.default_prog = { 'pwsh.exe', '-NoExit' }
