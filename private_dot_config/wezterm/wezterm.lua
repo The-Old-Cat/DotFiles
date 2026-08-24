@@ -42,7 +42,7 @@ c.keys = {
     -- Закрыть терминал (Ctrl+Shift+Q / Ctrl+Shift+Й)
     { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
 
-    -- Закрыть окно (Ctrl+W / Ctrl+Ц)
+    -- Закрыть окно (Ctrl+Q / Ctrl+Ц)
     { key = 'raw:81', mods = 'CTRL', action = wezterm.action.QuitApplication },
 
     -- Полноэкранный режим (Ctrl+Shift+F / Ctrl+Shift+А)
