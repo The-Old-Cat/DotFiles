@@ -3,10 +3,10 @@ local c = wezterm.config_builder()
 
 -- --- Шрифт (JetBrainsMono Nerd Font) ---
 c.font = wezterm.font_with_fallback {
-    'JetBrainsMono Nerd Font Mono',  -- Моноширинная версия
-    'JetBrainsMono Nerd Font',       -- Стандартная
-    'CaskaydiaCove Nerd Font Mono',  -- Запасной
-    'Consolas',                      -- Системный резерв
+    'JetBrainsMono Nerd Font Mono',
+    'JetBrainsMono Nerd Font',
+    'CaskaydiaCove Nerd Font Mono',
+    'Consolas',
 }
 c.font_size = 11.0
 c.harfbuzz_features = { 'calt', 'liga', 'dlig' }
@@ -30,18 +30,52 @@ c.enable_tab_bar = false
 
 -- --- Клавиатура ---
 c.keys = {
+    -- Копировать (Ctrl+C)
     { key = 'C', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
+    -- Копировать (Ctrl+Insert) для русской раскладки
+    { key = 'Insert', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
+
+    -- Вставить (Ctrl+V) и для русской раскладки (Ctrl+М)
     { key = 'V', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
+    { key = 'М', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
+    -- Вставить (Shift+Insert)
+    { key = 'Insert', mods = 'SHIFT', action = wezterm.action.PasteFrom 'Clipboard' },
+
+    -- Закрыть окно (Ctrl+Shift+Q)
+    { key = 'Q', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+    -- Закрыть окно (Ctrl+W) для тех, кто привык к браузерам
+    { key = 'W', mods = 'CTRL', action = wezterm.action.QuitApplication },
+    -- Закрыть окно (Ctrl+Shift+Й) для русской раскладки
+    { key = 'Й', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+
+    -- Увеличение шрифта
     { key = '=', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
     { key = '+', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
+    { key = '=', mods = 'CTRL|SHIFT', action = wezterm.action.IncreaseFontSize },
+
+    -- Уменьшение шрифта
     { key = '-', mods = 'CTRL', action = wezterm.action.DecreaseFontSize },
+    { key = '-', mods = 'CTRL|SHIFT', action = wezterm.action.DecreaseFontSize },
+
+    -- Сброс размера шрифта (Ctrl+0)
     { key = '0', mods = 'CTRL', action = wezterm.action.ResetFontSize },
-    -- Полноэкранный режим
-    { key = 'f', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
+    { key = '0', mods = 'CTRL|SHIFT', action = wezterm.action.ResetFontSize },
+
+    -- Полноэкранный режим (Ctrl+Shift+F)
+    { key = 'F', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
+    -- Полноэкранный режим для русской раскладки (Ctrl+Shift+А)
+    { key = 'А', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
+
+    -- Поиск (Ctrl+Shift+F)
+    { key = 'F', mods = 'CTRL|SHIFT', action = wezterm.action.Search },
+
+    -- Новая вкладка (если включить табы)
+    { key = 'T', mods = 'CTRL|SHIFT', action = wezterm.action.SpawnTab 'CurrentPaneDomain' },
 }
 
 -- --- Мышь ---
 c.mouse_bindings = {
+    -- Правый клик = вставка
     { event = { Down = { streak = 1, button = 'Right' } },
       action = wezterm.action.PasteFrom 'Clipboard' },
 }
