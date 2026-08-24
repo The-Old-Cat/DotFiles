@@ -43,7 +43,7 @@ c.keys = {
     { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
 
     -- Закрыть окно (Ctrl+W / Ctrl+Ц)
-    { key = 'raw:87', mods = 'CTRL', action = wezterm.action.QuitApplication },
+    { key = 'raw:81', mods = 'CTRL', action = wezterm.action.QuitApplication },
 
     -- Полноэкранный режим (Ctrl+Shift+F / Ctrl+Shift+А)
     { key = 'raw:70', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
