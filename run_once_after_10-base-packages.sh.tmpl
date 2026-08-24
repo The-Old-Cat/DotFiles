@@ -4,6 +4,17 @@
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
+# 1. Создаем директорию для шрифта
+mkdir -p ~/.local/share/fonts/jetbrains-mono
+
+# 2. Скачиваем архив шрифта
+curl -fLo /tmp/JetBrainsMono.zip \
+  https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+
+# 3. Распаковываем и обновляем кэш
+unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
+rm -f /tmp/JetBrainsMono.zip
+fc-cache -f ~/.local/share/fonts
 
 echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
 
