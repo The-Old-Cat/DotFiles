@@ -49,7 +49,7 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     $packages = @(
     # Основные инструменты
     "git", "gh", "fd", "ripgrep", "fzf", "restic",
-    "windows-terminal", "alacritty", "wezterm","uv", "advanced-ip-scanner",
+    "windows-terminal", "wezterm","uv", "advanced-ip-scanner",
     "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip",
 
     # CLI-улучшения
@@ -110,15 +110,6 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     # --- Шрифты Nerd Fonts ---
     Write-Host "Installing nerd-fonts..."
     scoop install Cascadia-Code JetBrainsMono-NF JetBrainsMono-NF-Mono | Out-Null
-
-    # --- Проверка конфига Alacritty (управляется chezmoi через AppData/Roaming) ---
-    $alacrittyConfig = "$env:APPDATA\alacritty\alacritty.toml"
-    if (Test-Path $alacrittyConfig) {
-        Write-Host "✓ Alacritty config is present in AppData"
-    }
-    else {
-        Write-Warning "Alacritty config not found in AppData. Run 'chezmoi apply' if needed."
-    }
 
     Write-Host "All Windows packages installed via scoop."
 }
