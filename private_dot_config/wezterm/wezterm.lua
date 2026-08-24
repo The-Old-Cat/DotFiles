@@ -1,10 +1,26 @@
 local wezterm = require 'wezterm'
+local mux = wezterm.mux
 local c = wezterm.config_builder()
 
--- --- Размеры и центрирование окна ---
+-- --- Центрирование окна при старте ---
+wezterm.on('gui-startup', function(cmd)
+    local tab, pane, window = mux.spawn_window(cmd or {})
+    local gui_window = window:gui_window()
+
+    -- Считываем параметры главного экрана
+    local screen = wezterm.gui.screens().main
+    local window_dims = gui_window:get_dimensions()
+
+    -- Центрируем окно на экране
+    local x = (screen.width - window_dims.pixel_width) / 2
+    local y = (screen.height - window_dims.pixel_height) / 2
+
+    gui_window:set_position(x, y)
+end)
+
+-- --- Размеры окна при запуске (в символах) ---
 c.initial_cols = 120
 c.initial_rows = 30
-c.window_position_type = 'Center'
 
 -- --- Шрифт (JetBrainsMono Nerd Font) ---
 c.font = wezterm.font_with_fallback {
