@@ -127,19 +127,20 @@ c.keys = {
   { key = '=', mods = 'CTRL', action = act.IncreaseFontSize },
   { key = '-', mods = 'CTRL', action = act.DecreaseFontSize },
   { key = '0', mods = 'CTRL', action = act.ResetFontSize },
+
   -- Создать новую вкладку (Ctrl+T / Ctrl+Е)
-{ key = 'raw:84', mods = 'CTRL', action = wezterm.action.SpawnTab 'CurrentPaneDomain' },
+  { key = 'raw:84', mods = 'CTRL', action = wezterm.action.SpawnTab 'CurrentPaneDomain' },
 
--- Переключение между вкладками (Ctrl+Tab и Ctrl+Shift+Tab)
-{ key = 'Tab', mods = 'CTRL', action = wezterm.action.ActivateTabRelative(1) },
-{ key = 'Tab', mods = 'CTRL|SHIFT', action = wezterm.action.ActivateTabRelative(-1) },
+  -- Переключение между вкладками (Ctrl+Tab и Ctrl+Shift+Tab)
+  { key = 'Tab', mods = 'CTRL', action = wezterm.action.ActivateTabRelative(1) },
+  { key = 'Tab', mods = 'CTRL|SHIFT', action = wezterm.action.ActivateTabRelative(-1) },
 
--- Переход по номерам вкладок (Ctrl+1 .. Ctrl+9)
-{ key = '1', mods = 'CTRL', action = wezterm.action.ActivateTab(0) },
-{ key = '2', mods = 'CTRL', action = wezterm.action.ActivateTab(1) },
-{ key = '3', mods = 'CTRL', action = wezterm.action.ActivateTab(2) },
-{ key = '4', mods = 'CTRL', action = wezterm.action.ActivateTab(3) },
-{ key = '5', mods = 'CTRL', action = wezterm.action.ActivateTab(4) },
+  -- Переход по номерам вкладок (Ctrl+1 .. Ctrl+9)
+  { key = '1', mods = 'CTRL', action = wezterm.action.ActivateTab(0) },
+  { key = '2', mods = 'CTRL', action = wezterm.action.ActivateTab(1) },
+  { key = '3', mods = 'CTRL', action = wezterm.action.ActivateTab(2) },
+  { key = '4', mods = 'CTRL', action = wezterm.action.ActivateTab(3) },
+  { key = '5', mods = 'CTRL', action = wezterm.action.ActivateTab(4) },
 }
 
 -- --- Мышь ---
