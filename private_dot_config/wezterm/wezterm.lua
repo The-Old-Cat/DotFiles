@@ -60,8 +60,8 @@ c.keys = {
     { key = 'raw:86', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
     { key = 'Insert', mods = 'SHIFT', action = wezterm.action.PasteFrom 'Clipboard' },
 
-    -- Закрыть окно (Ctrl+W / Ctrl+Ц)
-    { key = 'raw:87', mods = 'CTRL', action = wezterm.action.CloseCurrentTab { confirm = false } },
+    -- Закрыть окно (Ctrl+Q / Ctrl+Й)
+    { key = 'raw:81', mods = 'CTRL', action = wezterm.action.CloseCurrentTab { confirm = false } },
 
     -- Закрыть приложение целиком (Ctrl+Shift+Q / Ctrl+Shift+Й)
     { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
