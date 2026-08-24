@@ -1,5 +1,26 @@
 local wezterm = require 'wezterm'
+local mux = wezterm.mux
 local c = wezterm.config_builder()
+
+-- --- Размеры окна при запуске (в символах) ---
+local INITIAL_COLS = 120
+local INITIAL_ROWS = 30
+
+-- --- Центрирование окна при старте ---
+wezterm.on('gui-startup', function(cmd)
+    local tab, pane, window = mux.spawn_window(cmd or {})
+    local gui_window = window:gui_window()
+
+    gui_window:set_inner_size(INITIAL_COLS, INITIAL_ROWS)
+
+    local screen = wezterm.gui.screens().main
+    local window_dimensions = gui_window:get_dimensions()
+
+    local x = (screen.width - window_dimensions.pixel_width) / 2
+    local y = (screen.height - window_dimensions.pixel_height) / 2
+
+    gui_window:set_position(x, y)
+end)
 
 -- --- Шрифт (JetBrainsMono Nerd Font) ---
 c.font = wezterm.font_with_fallback {
@@ -17,7 +38,7 @@ c.color_scheme = 'Tokyo Night'
 -- --- Окно ---
 c.window_background_opacity = 0.92
 c.window_decorations = 'RESIZE'
-c.window_close_confirmation = 'NeverPrompt' -- <--- Закрытие без диалога
+c.window_close_confirmation = 'NeverPrompt'
 c.window_padding = {
     left = 10,
     right = 10,
@@ -39,11 +60,11 @@ c.keys = {
     { key = 'raw:86', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
     { key = 'Insert', mods = 'SHIFT', action = wezterm.action.PasteFrom 'Clipboard' },
 
-    -- Закрыть терминал (Ctrl+Shift+Q / Ctrl+Shift+Й)
-    { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+    -- Закрыть окно (Ctrl+Q / Ctrl+Й)
+    { key = 'raw:81', mods = 'CTRL', action = wezterm.action.CloseCurrentTab { confirm = false } },
 
-    -- Закрыть окно (Ctrl+Q / Ctrl+Ц)
-    { key = 'raw:81', mods = 'CTRL', action = wezterm.action.QuitApplication },
+    -- Закрыть приложение целиком (Ctrl+Shift+Q / Ctrl+Shift+Й)
+    { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
 
     -- Полноэкранный режим (Ctrl+Shift+F / Ctrl+Shift+А)
     { key = 'raw:70', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
@@ -65,9 +86,17 @@ c.keys = {
 
 -- --- Мышь ---
 c.mouse_bindings = {
+    -- Выделение мышью = автоматическое копирование в буфер обмена
+    {
+        event = { Up = { streak = 1, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.CompleteSelection 'Clipboard',
+    },
+
     -- Правый клик = вставка
     {
         event = { Down = { streak = 1, button = 'Right' } },
+        mods = 'NONE',
         action = wezterm.action.PasteFrom 'Clipboard',
     },
 }
