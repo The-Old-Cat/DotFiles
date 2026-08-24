@@ -1,33 +1,34 @@
 local wezterm = require 'wezterm'
 local mux = wezterm.mux
+local act = wezterm.action
 local c = wezterm.config_builder()
 
 -- --- Центрирование окна при старте ---
 wezterm.on('gui-startup', function(cmd)
-    local tab, pane, window = mux.spawn_window(cmd or {})
-    local gui_window = window:gui_window()
+  local tab, pane, window = mux.spawn_window(cmd or {
+    width = 120,
+    height = 30,
+  })
+  local gui_window = window:gui_window()
+  local screen = wezterm.gui.screens().main
+  local dims = gui_window:get_dimensions()
 
-    -- Считываем параметры главного экрана
-    local screen = wezterm.gui.screens().main
-    local window_dims = gui_window:get_dimensions()
+  local x = math.floor((screen.width - dims.pixel_width) / 2)
+  local y = math.floor((screen.height - dims.pixel_height) / 2)
 
-    -- Центрируем окно на экране
-    local x = (screen.width - window_dims.pixel_width) / 2
-    local y = (screen.height - window_dims.pixel_height) / 2
-
-    gui_window:set_position(x, y)
+  gui_window:set_position(x, y)
 end)
 
--- --- Размеры окна при запуске (в символах) ---
+-- --- Размеры окна ---
 c.initial_cols = 120
 c.initial_rows = 30
 
--- --- Шрифт (JetBrainsMono Nerd Font) ---
+-- --- Шрифт ---
 c.font = wezterm.font_with_fallback {
-    'JetBrainsMono Nerd Font Mono',
-    'JetBrainsMono Nerd Font',
-    'CaskaydiaCove Nerd Font Mono',
-    'Consolas',
+  'JetBrainsMono Nerd Font Mono',
+  'JetBrainsMono Nerd Font',
+  'CaskaydiaCove Nerd Font Mono',
+  'Consolas',
 }
 c.font_size = 11.0
 c.harfbuzz_features = { 'calt', 'liga', 'dlig' }
@@ -40,112 +41,155 @@ c.window_background_opacity = 0.92
 c.window_decorations = 'RESIZE'
 c.window_close_confirmation = 'NeverPrompt'
 c.window_padding = {
-    left = 10,
-    right = 10,
-    top = 10,
-    bottom = 10,
+  left = 10,
+  right = 10,
+  top = 10,
+  bottom = 10,
 }
 
 -- --- Табы ---
-c.hide_tab_bar_if_only_one_tab = true
 c.enable_tab_bar = false
+c.hide_tab_bar_if_only_one_tab = true
 
--- --- Клавиатура (поддержка RU и EN раскладок через Virtual Key Codes) ---
+-- --- Клавиатура (RU + EN через Virtual Key Codes) ---
 c.keys = {
-    -- Копировать (Ctrl+C / Ctrl+С)
-    { key = 'raw:67', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
-    { key = 'Insert', mods = 'CTRL', action = wezterm.action.CopyTo 'Clipboard' },
+  -- Умный Ctrl+C: копирует, если есть выделение, иначе отправляет SIGINT
+  {
+    key = 'raw:67', -- C / С
+    mods = 'CTRL',
+    action = wezterm.action_callback(function(window, pane)
+      local selection = window:get_selection_text_for_pane(pane)
+      if selection and #selection > 0 then
+        window:perform_action(act.CopyTo 'Clipboard', pane)
+      else
+        window:perform_action(act.SendKey { key = 'c', mods = 'CTRL' }, pane)
+      end
+    end),
+  },
 
-    -- Вставить (Ctrl+V / Ctrl+М)
-    { key = 'raw:86', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
-    { key = 'Insert', mods = 'SHIFT', action = wezterm.action.PasteFrom 'Clipboard' },
+  -- Ctrl+Shift+C — всегда копировать
+  {
+    key = 'raw:67',
+    mods = 'CTRL|SHIFT',
+    action = act.CopyTo 'Clipboard',
+  },
 
-    -- Закрыть окно (Ctrl+Q / Ctrl+Й)
-    { key = 'raw:81', mods = 'CTRL', action = wezterm.action.CloseCurrentTab { confirm = false } },
+  -- Ctrl+Insert — копировать
+  {
+    key = 'Insert',
+    mods = 'CTRL',
+    action = act.CopyTo 'Clipboard',
+  },
 
-    -- Закрыть приложение целиком (Ctrl+Shift+Q / Ctrl+Shift+Й)
-    { key = 'raw:81', mods = 'CTRL|SHIFT', action = wezterm.action.QuitApplication },
+  -- Ctrl+V / Ctrl+М — вставка
+  {
+    key = 'raw:86', -- V / М
+    mods = 'CTRL',
+    action = act.PasteFrom 'Clipboard',
+  },
 
-    -- Полноэкранный режим (Ctrl+Shift+F / Ctrl+Shift+А)
-    { key = 'raw:70', mods = 'CTRL|SHIFT', action = wezterm.action.ToggleFullScreen },
+  -- Ctrl+Shift+V — вставка (классика терминалов)
+  {
+    key = 'raw:86',
+    mods = 'CTRL|SHIFT',
+    action = act.PasteFrom 'Clipboard',
+  },
 
-    -- Увеличение шрифта
-    { key = '=', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
-    { key = '+', mods = 'CTRL', action = wezterm.action.IncreaseFontSize },
-    { key = '=', mods = 'CTRL|SHIFT', action = wezterm.action.IncreaseFontSize },
-    { key = '+', mods = 'CTRL|SHIFT', action = wezterm.action.IncreaseFontSize },
+  -- Shift+Insert — вставка
+  {
+    key = 'Insert',
+    mods = 'SHIFT',
+    action = act.PasteFrom 'Clipboard',
+  },
 
-    -- Уменьшение шрифта
-    { key = '-', mods = 'CTRL', action = wezterm.action.DecreaseFontSize },
-    { key = '-', mods = 'CTRL|SHIFT', action = wezterm.action.DecreaseFontSize },
+  -- Ctrl+Q / Ctrl+Й — закрыть вкладку/окно
+  {
+    key = 'raw:81', -- Q / Й
+    mods = 'CTRL',
+    action = act.CloseCurrentTab { confirm = false },
+  },
 
-    -- Сброс размера шрифта (Ctrl+0)
-    { key = '0', mods = 'CTRL', action = wezterm.action.ResetFontSize },
-    { key = '0', mods = 'CTRL|SHIFT', action = wezterm.action.ResetFontSize },
+  -- Ctrl+Shift+Q — выйти из WezTerm
+  {
+    key = 'raw:81',
+    mods = 'CTRL|SHIFT',
+    action = act.QuitApplication,
+  },
+
+  -- Ctrl+Shift+F — полный экран
+  {
+    key = 'raw:70', -- F / А
+    mods = 'CTRL|SHIFT',
+    action = act.ToggleFullScreen,
+  },
+
+  -- Размер шрифта
+  { key = '=', mods = 'CTRL', action = act.IncreaseFontSize },
+  { key = '-', mods = 'CTRL', action = act.DecreaseFontSize },
+  { key = '0', mods = 'CTRL', action = act.ResetFontSize },
 }
 
 -- --- Мышь ---
 c.mouse_bindings = {
-    -- Левый клик: начало выделения
-    {
-        event = { Down = { streak = 1, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.SelectTextAtMouseCursor 'Cell',
-    },
-    -- Двойной клик: выделение слова
-    {
-        event = { Down = { streak = 2, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.SelectTextAtMouseCursor 'Word',
-    },
-    -- Тройной клик: выделение всей строки
-    {
-        event = { Down = { streak = 3, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.SelectTextAtMouseCursor 'Line',
-    },
-
-    -- Тянем: расширение выделения
-    {
-        event = { Drag = { streak = 1, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.ExtendSelectionToMouseCursor 'Cell',
-    },
-
-    -- Отпустили ЛКМ: копирование в Clipboard (или переход по ссылке, если кликнули по URL)
-    {
-        event = { Up = { streak = 1, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.CompleteSelectionOrOpenLinkAtMouseCursor 'Clipboard',
-    },
-    {
-        event = { Up = { streak = 2, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.CompleteSelection 'Clipboard',
-    },
-    {
-        event = { Up = { streak = 3, button = 'Left' } },
-        mods = 'NONE',
-        action = wezterm.action.CompleteSelection 'Clipboard',
-    },
-
-    -- Средняя и правая кнопки: вставка
-    {
-        event = { Down = { streak = 1, button = 'Middle' } },
-        mods = 'NONE',
-        action = wezterm.action.PasteFrom 'Clipboard',
-    },
-    {
-        event = { Down = { streak = 1, button = 'Right' } },
-        mods = 'NONE',
-        action = wezterm.action.PasteFrom 'Clipboard',
-    },
+  -- Левый клик
+  {
+    event = { Down = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor 'Cell',
+  },
+  -- Двойной клик — слово
+  {
+    event = { Down = { streak = 2, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor 'Word',
+  },
+  -- Тройной клик — строка
+  {
+    event = { Down = { streak = 3, button = 'Left' } },
+    mods = 'NONE',
+    action = act.SelectTextAtMouseCursor 'Line',
+  },
+  -- Тянем выделение
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.ExtendSelectionToMouseCursor 'Cell',
+  },
+  -- Отпустили ЛКМ — копирование или открытие ссылки
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = act.CompleteSelectionOrOpenLinkAtMouseCursor 'Clipboard',
+  },
+  {
+    event = { Up = { streak = 2, button = 'Left' } },
+    mods = 'NONE',
+    action = act.CompleteSelection 'Clipboard',
+  },
+  {
+    event = { Up = { streak = 3, button = 'Left' } },
+    mods = 'NONE',
+    action = act.CompleteSelection 'Clipboard',
+  },
+  -- Средняя и правая кнопки — вставка
+  {
+    event = { Down = { streak = 1, button = 'Middle' } },
+    mods = 'NONE',
+    action = act.PasteFrom 'Clipboard',
+  },
+  {
+    event = { Down = { streak = 1, button = 'Right' } },
+    mods = 'NONE',
+    action = act.PasteFrom 'Clipboard',
+  },
 }
+
 -- --- Оболочка ---
 if wezterm.target_triple:find('windows') then
-    c.default_prog = { 'pwsh.exe', '-NoExit' }
+  c.default_prog = { 'pwsh.exe', '-NoExit' }
+  c.default_cwd = wezterm.home_dir
 else
-    c.default_prog = { '/bin/bash', '--login' }
+  c.default_prog = { '/bin/bash', '--login' }
 end
 
 return c
