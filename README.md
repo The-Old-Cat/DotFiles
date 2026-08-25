@@ -314,7 +314,6 @@ chezmoi data
 
 ## 📚 Дополнительная информация
 
-- Подробный конспект по Chezmoi: [Chezmoi.md](./Chezmoi.md)
 - Официальная документация Chezmoi: [chezmoi.io](https://www.chezmoi.io/)
 
 ---
