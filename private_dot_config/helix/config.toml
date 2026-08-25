@@ -1,0 +1,42 @@
+# Тема
+theme = "gruvbox"
+
+# Общие настройки редактора
+[editor]
+line-number = "relative"        # относительные номера строк
+mouse = true                    # поддержка мыши
+true-color = true               # настоящие цвета
+color-modes = true              # режимы цвета
+bufferline = "multiple"         # показывать буферы
+rulers = [120]                  # вертикальные линейки
+gutters = ["diagnostics", "line-numbers", "spacer"]
+
+
+# Отступы
+[editor.indent-guides]
+render = true
+character = "┊"  # или "|"
+
+# Курсор
+[editor.cursor-shape]
+insert = "bar"          # | в режиме вставки
+normal = "block"        # █ в нормальном режиме
+select = "underline"    # _ в режиме выделения
+
+# Мягкий перенос строк
+[editor.soft-wrap]
+enable = true
+
+# Горячие клавиши (кастомизация)
+[keys.normal]
+"C-s" = ":write"                    # Ctrl+S - сохранить
+"C-q" = ":quit"                    # Ctrl+Q - выйти
+"C-w" = ":wq"                      # Ctrl+W - сохранить и выйти
+"C-n" = ":new"                     # Ctrl+N - новый файл
+"C-o" = ":open"                    # Ctrl+O - открыть файл
+
+[keys.insert]
+"C-s" = ":write"
+"C-q" = ":quit"
+
+
