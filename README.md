@@ -3,6 +3,8 @@
 [![Chezmoi](https://img.shields.io/badge/managed%20by-chezmoi-3b5c9b?logo=chezmoi)](https://www.chezmoi.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[README](https://github.com/The-Old-Cat/dotfiles/edit/main/README.md)
+
 Мои конфигурационные файлы (dotfiles) для управления настройками окружения в Unix-подобных системах и Windows. Управляются с помощью [Chezmoi](https://www.chezmoi.io/).
 
 ## 📖 Оглавление
