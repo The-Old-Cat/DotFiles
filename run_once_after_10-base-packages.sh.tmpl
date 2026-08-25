@@ -78,24 +78,45 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 
     # --- Установка Helix (через tar.xz с GitHub) ---
     if ! command -v hx >/dev/null 2>&1; then
-        echo "Installing Helix editor from tar.xz..."
+        echo "Installing Helix editor from GitHub release..."
+
+        # Определяем архитектуру
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  HELIX_ARCH="x86_64" ;;
+            aarch64) HELIX_ARCH="aarch64" ;;
+            *)       echo "⚠️ Unsupported architecture: $ARCH"; exit 1 ;;
+        esac
 
         # Получаем последнюю версию
         HELIX_VERSION=$(curl -s https://api.github.com/repos/helix-editor/helix/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
 
-        if [ -n "$HELIX_VERSION" ]; then
+        if [ -z "$HELIX_VERSION" ]; then
+            echo "⚠️ Failed to get Helix version, skipping..."
+        else
             # Скачиваем архив
-            curl -fLo /tmp/helix.tar.xz "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz"
+            ARCHIVE="helix-${HELIX_VERSION}-${HELIX_ARCH}-linux.tar.xz"
+            URL="https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/${ARCHIVE}"
 
-            # Распаковываем в /usr/local
-            sudo tar -xf /tmp/helix.tar.xz -C /usr/local --strip-components=1
+            echo "Downloading $URL ..."
+            curl -fLo /tmp/helix.tar.xz "$URL"
 
-            # Удаляем архив
-            rm -f /tmp/helix.tar.xz
+            # Распаковываем во временную папку
+            mkdir -p /tmp/helix-extract
+            tar -xf /tmp/helix.tar.xz -C /tmp/helix-extract
+
+            # Копируем бинарник в /usr/local/bin
+            sudo cp "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/hx" /usr/local/bin/
+            sudo chmod +x /usr/local/bin/hx
+
+            # Копируем runtime (языковые серверы, подсветка и т.д.)
+            sudo mkdir -p /usr/local/share/helix
+            sudo cp -r "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/runtime" /usr/local/share/helix/
+
+            # Чистим временные файлы
+            rm -rf /tmp/helix-extract /tmp/helix.tar.xz
 
             echo "✓ Helix installed: $(hx --version 2>/dev/null | head -1)"
-        else
-            echo "⚠️ Failed to get Helix version, skipping..."
         fi
     else
         echo "Helix is already installed: $(hx --version 2>/dev/null | head -1)"
