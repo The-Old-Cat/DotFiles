@@ -13,23 +13,14 @@ docs/**
 Thumbs.db
 
 # ============================================
-# Сгенерированные файлы (всегда)
-# ============================================
-*.sh
-*.ps1
-
-
-# ============================================
 # Условное игнорирование для Windows
 # ============================================
 {{- if eq .chezmoi.os "windows" }}
-# Игнорируем все .sh.tmpl файлы
+# Игнорируем Linux-скрипты и их шаблоны
+*.sh
 *.sh.tmpl
 *.bash.tmpl
 *.zsh.tmpl
-
-# Но конкретно этот файл НЕ игнорируем
-!run_once_after_20-windows-packages.ps1.tmpl
 
 # Игнорируем Linux-конфиги
 tmux/
@@ -45,20 +36,15 @@ dot_profile*
 .zprofile
 .local/
 .config/**/linux-only/
-
-# Игнорируем Linux-скрипт
-run_once_after_10-base-packages.sh.tmpl
 {{- end }}
 
 # ============================================
 # Условное игнорирование для Linux
 # ============================================
 {{- if eq .chezmoi.os "linux" }}
-# Игнорируем все .ps1.tmpl файлы
+# Игнорируем Windows-скрипты и их шаблоны
+*.ps1
 *.ps1.tmpl
-
-# Но конкретно этот файл НЕ игнорируем
-!run_once_after_10-base-packages.sh.tmpl
 
 # Игнорируем Windows-конфиги
 AppData/
@@ -67,7 +53,4 @@ pwsh/
 PowerShell/
 .config/WindowsTerminal/
 .config/PowerShell/
-
-# Игнорируем Windows-скрипт
-run_once_after_20-windows-packages.ps1.tmpl
 {{- end }}
