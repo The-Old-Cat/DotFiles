@@ -48,7 +48,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         sudo apt-get update
     fi
 
-    # --- Базовые пакеты (общие для всех) ---
+   # --- Базовые пакеты (общие для всех) ---
     echo "Installing common packages..."
     sudo apt-get install -y --no-install-recommends \
         git \
@@ -66,7 +66,15 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         python3-pip \
         ripgrep \
         fzf \
-        fd-find
+        fd-find \
+        golang-go
+
+    # Проверить версию Go
+    if command -v go >/dev/null 2>&1; then
+        echo "✓ Go installed: $(go version)"
+    else
+        echo "⚠️ Go installation failed"
+    fi
 
     # --- Установка lsd (альтернатива ls) ---
     if ! command -v lsd >/dev/null 2>&1; then
