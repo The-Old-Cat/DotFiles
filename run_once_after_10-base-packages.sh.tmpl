@@ -48,7 +48,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         sudo apt-get update
     fi
 
-   # --- Базовые пакеты (общие для всех) ---
+    # --- Базовые пакеты (общие для всех) ---
     echo "Installing common packages..."
     sudo apt-get install -y --no-install-recommends \
         git \
@@ -67,8 +67,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         ripgrep \
         fzf \
         fd-find \
-        golang-go \
-        helix
+        golang-go
 
     # Проверить версию Go
     if command -v go >/dev/null 2>&1; then
@@ -77,15 +76,31 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "⚠️ Go installation failed"
     fi
 
-    # --- Установка lsd (альтернатива ls) ---
+    # --- Установка Helix (редактор) ---
+    if ! command -v hx >/dev/null 2>&1; then
+        echo "Installing Helix editor via .deb from GitHub..."
+        HELIX_VERSION=$(curl -s https://api.github.com/repos/helix-editor/helix/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
+        if [ -n "$HELIX_VERSION" ]; then
+            curl -fLo /tmp/helix.deb "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix_${HELIX_VERSION}_amd64.deb"
+            sudo dpkg -i /tmp/helix.deb 2>/dev/null || true
+            sudo apt-get install -f -y
+            rm -f /tmp/helix.deb
+            echo "✓ Helix installed: $(hx --version 2>/dev/null | head -1)"
+        else
+            echo "⚠️ Failed to get Helix version, skipping..."
+        fi
+    else
+        echo "Helix is already installed: $(hx --version 2>/dev/null | head -1)"
+    fi
+
+    # --- Установка lsd ---
     if ! command -v lsd >/dev/null 2>&1; then
         echo "Installing lsd..."
-        # Скачиваем последний релиз lsd
         LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
         if [ -n "$LSD_VERSION" ]; then
             curl -fLo /tmp/lsd.deb "https://github.com/lsd-rs/lsd/releases/download/${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb"
             sudo dpkg -i /tmp/lsd.deb 2>/dev/null || true
-            sudo apt-get install -f -y  # Исправляем зависимости
+            sudo apt-get install -f -y
             rm -f /tmp/lsd.deb
             echo "✓ lsd installed"
         else
@@ -103,8 +118,6 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             xclip
     else
         echo "Installing WSL-specific packages..."
-
-        # --- Docker для WSL ---
         echo "Installing Docker for WSL..."
         sudo apt-get install -y --no-install-recommends \
             docker.io \
@@ -112,28 +125,23 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             dos2unix \
             x11-apps \
             dbus-user-session
-
-        # Добавляем пользователя в группу docker
         sudo usermod -aG docker $USER
         echo "✓ Docker installed. You may need to restart your WSL session."
 
-        # --- Установка wsl-open (пробуем несколько способов) ---
+        # --- Установка wsl-open ---
         if ! command -v wsl-open >/dev/null 2>&1; then
             echo "Installing wsl-open..."
-            # Способ 1: через скрипт (может не работать)
             if curl -sSL https://raw.githubusercontent.com/4U6U57/wsl-open/master/wsl-open.sh -o ~/.local/bin/wsl-open 2>/dev/null; then
                 chmod +x ~/.local/bin/wsl-open
                 sudo ln -sf ~/.local/bin/wsl-open /usr/local/bin/wsl-open 2>/dev/null || true
                 echo "✓ wsl-open installed via script"
             else
-                # Способ 2: через xdg-open (запасной вариант)
                 echo "⚠️ wsl-open installation failed, using xdg-open as fallback"
-                alias open="xdg-open"
                 echo 'alias open="xdg-open"' >> ~/.bashrc
             fi
         fi
 
-        # --- Настройка wsl.conf для systemd ---
+        # --- Настройка wsl.conf ---
         if [ -f /etc/wsl.conf ]; then
             if ! grep -q "systemd=true" /etc/wsl.conf; then
                 echo -e "\n[boot]\nsystemd=true" | sudo tee -a /etc/wsl.conf > /dev/null
@@ -157,7 +165,6 @@ alias wclip="powershell.exe -command Get-Clipboard"
 alias ls="lsd"
 alias ll="lsd -la"
 alias tree="lsd --tree"
-# Если wsl-open установлен, используем его
 if command -v wsl-open >/dev/null 2>&1; then
     alias open="wsl-open"
 else
@@ -168,20 +175,15 @@ EOF
         fi
     fi
 
-    # --- Установка uv (менеджер пакетов Python) ---
+    # --- Установка uv ---
     if ! command -v uv >/dev/null 2>&1; then
         echo "Installing uv (Python package manager)..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
-
-        # Добавляем ~/.cargo/bin в PATH для текущей сессии
         export PATH="$HOME/.cargo/bin:$PATH"
-
-        # Добавляем ~/.cargo/bin в PATH навсегда (в .bashrc)
         if ! grep -q 'export PATH="$HOME/.cargo/bin:$PATH"' ~/.bashrc 2>/dev/null; then
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
             echo "✓ Added ~/.cargo/bin to PATH in .bashrc"
         fi
-
         if command -v uv >/dev/null 2>&1; then
             echo "✓ uv installed successfully"
             uv --version
@@ -209,7 +211,6 @@ EOF
 
     echo "✓ Linux run-once completed"
 
-    # --- Вывод итоговой информации ---
     echo ""
     echo "=== SUMMARY ==="
     echo "OS: {{ .chezmoi.os }}"
