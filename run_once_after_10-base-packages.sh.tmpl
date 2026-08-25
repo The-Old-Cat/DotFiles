@@ -178,5 +178,5 @@ fi
 {{- else }}
 
 echo "Skipped: script is Linux-only, current OS is {{ .chezmoi.os }}"
-
+fc-cache -f ~/.local/share/fonts
 {{- end }}
