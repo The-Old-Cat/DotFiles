@@ -23,7 +23,7 @@ foreach ($pkg in $corePackages) {
 
 # --- CLI улучшения ---
 Write-Host "Installing CLI improvements..."
-$cliPackages = @("jq", "yq", "zoxide", "dust", "procs", "bat", "starship")
+$cliPackages = @("jq", "yq", "zoxide", "dust", "procs", "bat", "starship", "lsd")
 foreach ($pkg in $cliPackages) {
     Write-Host "Installing $pkg..."
     scoop install $pkg 2>&1 | Out-Null
