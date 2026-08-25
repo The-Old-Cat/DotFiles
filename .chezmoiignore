@@ -1,13 +1,69 @@
+# ============================================
+# Всегда игнорируем
+# ============================================
 README.md
 docs/**
+.chezmoi.toml.tmpl
+.git/
+.gitignore
+
+# Временные файлы
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Условное игнорирование для Windows
+# ============================================
 {{- if eq .chezmoi.os "windows" }}
-run_once_after_10-base-packages.sh
-10-base-packages.sh
+# Linux-специфичные скрипты
+run_once_after_10-base-packages.sh.tmpl
+# Другие shell-скрипты (если не используются в WSL)
+*.sh.tmpl
+*.bash.tmpl
+*.zsh.tmpl
+
+# Linux-специфичные конфиги
 tmux/
+helix/
+.config/helix/
+.config/tmux/
+.config/nvim/  # если есть
+
+# Shell-конфиги
+dot_bash*
+dot_profile*
+.profile
+.bash*
+.zsh*
+.zprofile
+
+# Linux-специфичные папки
+.local/
+.config/**/linux-only/
 {{- end }}
+
+# ============================================
+# Условное игнорирование для Linux
+# ============================================
 {{- if eq .chezmoi.os "linux" }}
-run_once_after_20-windows-packages.ps1
-20-windows-packages.ps1
+# Windows-специфичные скрипты
+run_once_after_20-windows-packages.ps1.tmpl
+*.ps1.tmpl
+
+# Windows-специфичные конфиги
 AppData/
 Documents/
+pwsh/
+PowerShell/
+.config/WindowsTerminal/
+.config/PowerShell/
+
+# PowerShell-файлы
+*.ps1
+*.psd1
+*.psm1
+*.ps1xml
 {{- end }}
