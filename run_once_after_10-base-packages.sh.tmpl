@@ -2,8 +2,18 @@
 # run_once_after_10-base-packages.sh.tmpl
 # Условная установка пакетов и шрифтов: Linux only (Windows — отдельный .ps1.tmpl)
 set -euo pipefail
- {{- if eq .chezmoi.os "linux" }}
+
+{{- if eq .chezmoi.os "linux" }}
 echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
+
+# Функция определения WSL
+is_wsl() {
+    [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] && return 0
+    grep -qi "microsoft" /proc/version 2>/dev/null && return 0
+    grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null && return 0
+    return 1
+}
+
 # --- Ubuntu/Debian: базовые пакеты ---
 if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # GitHub CLI: apt-репозиторий (только если gh ещё нет)
@@ -15,31 +25,50 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
             | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
     fi
+
     echo "Installing base packages..."
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends \
         git curl wget htop jq age restic gh unzip tmux fontconfig \
-        build-essential python3-pip ripgrep fzf fd-find golang-go
-    {{- if eq .chezmoi.hostname "ADM00-01IT" }}
-    # WSL-хост: Docker
-    echo "Installing Docker for WSL..."
-    sudo apt-get install -y --no-install-recommends \
-        docker.io docker-compose-v2
-    {{- end }}
-    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
+        build-essential python3-pip ripgrep fzf fd-find golang-go lsd
+
+    # WSL-специфичные пакеты
+    if is_wsl; then
+        echo "Detected WSL environment, installing WSL-specific packages..."
+        sudo apt-get install -y --no-install-recommends \
+            docker.io docker-compose-v2
+
+        # Установка wslopen
+        if ! command -v wslopen >/dev/null 2>&1; then
+            echo "Installing wslopen..."
+            WSLOPEN_VERSION="v0.2.0"
+            curl -fLo /tmp/wslopen \
+                "https://github.com/mkletri/wslopen/releases/download/${WSLOPEN_VERSION}/wslopen-x86_64-unknown-linux-musl"
+            sudo install -m 755 /tmp/wslopen /usr/local/bin/wslopen
+            rm -f /tmp/wslopen
+            wslopen setup --browser --wslview-alias
+            echo "✓ wslopen installed and configured"
+        fi
+    fi
+
     # Proxmox-хосты: утилиты управления
+    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
     echo "Installing Proxmox tools..."
     sudo apt-get install -y --no-install-recommends \
         pve-manager-tools qemu-guest-agent
     {{- end }}
-    # Установка WezTerm (только для нативного Linux, пропускается в WSL)
-    {{- if ne .chezmoi.hostname "ADM00-01IT" }}
-    echo "Installing WezTerm..."
-    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
-    echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends wezterm
-    {{- end }}
+
+    # WezTerm: только для нативного Linux, пропускаем в WSL
+    if ! is_wsl; then
+        echo "Installing WezTerm (native Linux)..."
+        curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+        echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends wezterm
+    else
+        echo "Skipping WezTerm installation (WSL environment)"
+    fi
+
     # Установка Helix (из официальных релизов, без Snap)
     if ! command -v helix >/dev/null 2>&1; then
         echo "Installing Helix..."
@@ -49,24 +78,29 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         sudo tar -xJf /tmp/helix.tar.xz -C /usr/local --strip-components=1
         rm -f /tmp/helix.tar.xz
     fi
+
     # Установка uv (Python package manager)
     if ! command -v uv >/dev/null 2>&1; then
         echo "Installing uv..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
     fi
+
     # Шрифты: JetBrainsMono Nerd Font (только для нативного Linux)
-    {{- if ne .chezmoi.hostname "ADM00-01IT" }}
-    if ! fc-list | grep -qi "JetBrainsMonoNF"; then
-        echo "Installing JetBrainsMono Nerd Font..."
-        mkdir -p ~/.local/share/fonts/jetbrainsmono
-        curl -fLo /tmp/JetBrainsMono.zip \
-            https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-        unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrainsmono
-        rm -f /tmp/JetBrainsMono.zip
-        fc-cache -f ~/.local/share/fonts >/dev/null
-        echo "✓ JetBrainsMono Nerd Font installed"
+    if ! is_wsl; then
+        if ! fc-list | grep -qi "JetBrainsMonoNF"; then
+            echo "Installing JetBrainsMono Nerd Font (native Linux)..."
+            mkdir -p ~/.local/share/fonts/jetbrainsmono
+            curl -fLo /tmp/JetBrainsMono.zip \
+                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+            unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrainsmono
+            rm -f /tmp/JetBrainsMono.zip
+            fc-cache -f ~/.local/share/fonts >/dev/null
+            echo "✓ JetBrainsMono Nerd Font installed"
+        fi
+    else
+        echo "Skipping font installation (WSL environment - fonts are managed by Windows)"
     fi
-    {{- end }}
+
     echo "✓ Linux run-once completed"
 else
     echo "ERROR: Unsupported Linux distro" >&2
