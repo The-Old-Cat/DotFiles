@@ -1,120 +1,287 @@
 # run_once_after_20-windows-packages.ps1.tmpl — Windows only
 {{- if eq .chezmoi.os "windows" }}
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"  # Не останавливаемся при ошибках
 
-# --- Установка Age через scoop ---
-function Install-Age {
-    if (Get-Command age-keygen -ErrorAction SilentlyContinue) {
-        Write-Host "age is already installed."
+# --- Создание лога установки ---
+$logFile = "$env:USERPROFILE\scoop\logs\scoop-install-log-$(Get-Date -Format 'yyyy-MM-dd-HH-mm-ss').txt"
+Start-Transcript -Path $logFile -Append
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  WINDOWS PACKAGES INSTALLATION SCRIPT  " -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Started at: $(Get-Date)" -ForegroundColor Yellow
+Write-Host "Log file: $logFile`n" -ForegroundColor Yellow
+
+# --- Проверка архитектуры системы ---
+if ([Environment]::Is64BitOperatingSystem) {
+    Write-Host "✓ Running on 64-bit system" -ForegroundColor Green
+} else {
+    Write-Host "⚠️ Running on 32-bit system (limited package support)" -ForegroundColor Yellow
+}
+
+# --- Функция для добавления bucket с проверкой ---
+function Add-Bucket {
+    param($BucketName)
+
+    $buckets = (scoop bucket list 2>$null).Name
+    if ($buckets -notcontains $BucketName) {
+        Write-Host "Adding '$BucketName' bucket..." -ForegroundColor Yellow
+        try {
+            scoop bucket add $BucketName 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✓ '$BucketName' bucket added" -ForegroundColor Green
+            } else {
+                Write-Warning "⚠️ Failed to add '$BucketName' bucket"
+            }
+        } catch {
+            Write-Warning "⚠️ Error adding '$BucketName' bucket: $_"
+        }
+    } else {
+        Write-Host "✓ '$BucketName' bucket already exists" -ForegroundColor Green
+    }
+}
+
+# --- Функция для установки пакетов с расширенной проверкой ---
+function Install-Package {
+    param($Package)
+
+    Write-Host "Installing $Package..." -ForegroundColor Cyan
+
+    # Проверяем, установлен ли уже пакет
+    $installed = scoop list 2>$null | ForEach-Object { ($_ -split '\s+')[0] } | Where-Object { $_ -eq $Package }
+    if ($installed) {
+        Write-Host "✓ $Package already installed" -ForegroundColor Green
         return
     }
 
-    Write-Host "Installing age via scoop..."
+    try {
+        $result = scoop install $Package 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ $Package installed successfully" -ForegroundColor Green
+        } else {
+            Write-Warning "⚠️ Failed to install $Package"
+            if ($result -match "already installed") {
+                Write-Host "   Package already installed (detected)" -ForegroundColor Gray
+            } else {
+                Write-Host "   Error: $($result -join '; ')" -ForegroundColor Gray
+            }
+        }
+    } catch {
+        Write-Warning "⚠️ Error installing $Package: $_"
+    }
+}
 
-    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
-        Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
-        return
+# --- Функция для установки группы пакетов с прогрессом ---
+function Install-PackageGroup {
+    param(
+        $GroupName,
+        $Packages
+    )
+
+    Write-Host "`n📦 Installing $GroupName packages..." -ForegroundColor Magenta
+    Write-Host ("-" * 50) -ForegroundColor Gray
+
+    $total = $Packages.Count
+    $current = 0
+
+    foreach ($pkg in $Packages) {
+        $current++
+        Write-Progress -Activity "Installing $GroupName packages" -Status "Package $current of $total: $pkg" -PercentComplete (($current / $total) * 100)
+        Install-Package $pkg
     }
 
-    scoop install age | Out-Null
-    Write-Host "age installed successfully."
+    Write-Progress -Activity "Installing $GroupName packages" -Completed
 }
 
 # --- Основной блок ---
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
-    Write-Host "Using scoop for package installation..."
+    Write-Host "`n✅ Scoop found. Starting package installation..." -ForegroundColor Green
 
-    # Добавляем необходимые buckets (один раз)
-    $buckets = (scoop bucket list 2>$null).Name
+    # --- Обновление Scoop ---
+    Write-Host "`n🔄 Updating Scoop..." -ForegroundColor Cyan
+    scoop update 2>&1 | Out-Null
+    Write-Host "✓ Scoop updated" -ForegroundColor Green
 
-    if ($buckets -notcontains "extras") {
-        Write-Host "Adding 'extras' bucket..."
-        scoop bucket add extras | Out-Null
+    # --- Добавление необходимых buckets ---
+    Write-Host "`n📦 Adding buckets..." -ForegroundColor Cyan
+    Add-Bucket "extras"
+    Add-Bucket "nerd-fonts"
+    Add-Bucket "sysinternals"
+
+    # --- Очистка кеша (опционально) ---
+    Write-Host "`n🧹 Cleaning Scoop cache..." -ForegroundColor Cyan
+    scoop cache rm --all 2>&1 | Out-Null
+    Write-Host "✓ Cache cleaned" -ForegroundColor Green
+
+    # --- КАТЕГОРИИ ПАКЕТОВ ---
+    $packageGroups = @{
+        "Основные инструменты" = @(
+            "git",
+            "gh",
+            "fd",
+            "ripgrep",
+            "fzf",
+            "restic",
+            "windows-terminal",
+            "wezterm",
+            "uv",
+            "advanced-ip-scanner",
+            "unlocker",
+            "pwsh",
+            "vscode",
+            "curl",
+            "sudo",
+            "grep",
+            "aria2",
+            "7zip"
+        )
+
+        "CLI-улучшения" = @(
+            "jq",
+            "yq",
+            "zoxide",
+            "dust",
+            "procs",
+            "bat",
+            "starship"
+        )
+
+        "Сеть и утилиты" = @(
+            "nmap",
+            "curlie",
+            "wget",
+            "yt-dlp",
+            "ffmpeg"
+        )
+
+        "Безопасность и продуктивность" = @(
+            "bitwarden-cli",
+            "age ",
+            "obsidian",
+            "flow-launcher"
+        )
+
+        "Разработка" = @(
+            "nodejs-lts",
+            "go"
+        )
+
+        "Sysinternals" = @(
+            "process-explorer",
+            "autoruns",
+            "tcpview",
+            "handle",
+            "du",
+            "procmon",
+            "psservice",
+            "rammap",
+            "sysmon"
+        )
     }
 
-    if ($buckets -notcontains "nerd-fonts") {
-        Write-Host "Adding 'nerd-fonts' bucket..."
-        scoop bucket add nerd-fonts | Out-Null
+    # --- Установка всех групп пакетов ---
+    foreach ($group in $packageGroups.Keys) {
+        Install-PackageGroup -GroupName $group -Packages $packageGroups[$group]
     }
 
-    if ($buckets -notcontains "sysinternals") {
-        Write-Host "Adding 'sysinternals' bucket..."
-        scoop bucket add sysinternals | Out-Null
-    }
+    # --- Установка шрифтов Nerd Fonts ---
+    Write-Host "`n🔤 Installing Nerd Fonts..." -ForegroundColor Magenta
+    Write-Host ("-" * 50) -ForegroundColor Gray
 
-    # Устанавливаем age (после добавления buckets)
-    Install-Age
+    $fonts = @(
+        "Cascadia-Code",
+        "JetBrainsMono-NF",
+        "JetBrainsMono-NF-Mono"
+    )
 
-    $packages = @(
-    # Основные инструменты
-    "git", "gh", "fd", "ripgrep", "fzf", "restic",
-    "windows-terminal", "wezterm","uv", "advanced-ip-scanner", "unlocker",
-    "pwsh", "vscode", "curl", "sudo", "grep", "aria2", "7zip",
-
-    # CLI-улучшения
-    "jq", "yq",
-    "zoxide",
-    "dust",
-    "procs",
-    "bat",
-    "starship",
-
-    # Сеть / утилиты
-    "nmap",
-    "curlie",
-    "wget",
-    "yt-dlp",
-    "ffmpeg",
-
-    # Безопасность / продуктивность
-    "bitwarden-cli",
-    "obsidian",
-    "flow-launcher",
-
-    # Разработка
-    "nodejs-lts",
-    "go",
-
-    # Sysinternals
-    "process-explorer",
-    "autoruns",
-    "tcpview",
-    "handle",
-    "du",
-    "procmon",
-    "psservice",
-    "rammap",
-    "sysmon"
-)
-
-    foreach ($pkg in $packages) {
-        Write-Host "Installing $pkg..."
-        scoop install $pkg 2>&1 | Out-Null
+    foreach ($font in $fonts) {
+        Install-Package $font
     }
 
     # --- Регистрация VS Code в системе ---
-    Write-Host "Registering VS Code in system..."
+    Write-Host "`n🔧 Registering VS Code in system..." -ForegroundColor Cyan
+    Write-Host ("-" * 50) -ForegroundColor Gray
+
     $vscodePath = "$env:USERPROFILE\scoop\apps\vscode\current"
 
     if (Test-Path $vscodePath) {
-        reg import "$vscodePath\install-context.reg" 2>&1 | Out-Null
-        reg import "$vscodePath\install-associations.reg" 2>&1 | Out-Null
-        reg import "$vscodePath\install-github-integration.reg" 2>&1 | Out-Null
-        Write-Host "✓ VS Code registered"
-    }
-    else {
-        Write-Warning "VS Code not found at $vscodePath"
+        $regFiles = @(
+            "install-context.reg",
+            "install-associations.reg",
+            "install-github-integration.reg"
+        )
+
+        $successCount = 0
+        foreach ($regFile in $regFiles) {
+            $regPath = Join-Path $vscodePath $regFile
+            if (Test-Path $regPath) {
+                try {
+                    $result = reg import $regPath 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "✓ Imported $regFile" -ForegroundColor Green
+                        $successCount++
+                    } else {
+                        Write-Warning "⚠️ Failed to import $regFile (exit code: $LASTEXITCODE)"
+                        Write-Host "   Error: $result" -ForegroundColor Gray
+                    }
+                } catch {
+                    Write-Warning "⚠️ Error importing $regFile: $_"
+                }
+            } else {
+                Write-Warning "⚠️ $regFile not found at $regPath"
+            }
+        }
+
+        if ($successCount -eq $regFiles.Count) {
+            Write-Host "✅ All VS Code registrations completed successfully" -ForegroundColor Green
+        } else {
+            Write-Host "⚠️ Some VS Code registrations failed ($successCount/$($regFiles.Count))" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Warning "⚠️ VS Code not found at $vscodePath"
     }
 
-    # --- Шрифты Nerd Fonts ---
-    Write-Host "Installing nerd-fonts..."
-    scoop install Cascadia-Code JetBrainsMono-NF JetBrainsMono-NF-Mono | Out-Null
+    # --- Экспорт списка установленных пакетов ---
+    Write-Host "`n📝 Exporting installed packages list..." -ForegroundColor Cyan
+    Write-Host ("-" * 50) -ForegroundColor Gray
 
-    Write-Host "All Windows packages installed via scoop."
+    $exportPath = "$env:USERPROFILE\scoop\logs\scoop-packages-$(Get-Date -Format 'yyyy-MM-dd').txt"
+    try {
+        scoop list > $exportPath
+        Write-Host "✓ Exported to: $exportPath" -ForegroundColor Green
+    } catch {
+        Write-Warning "⚠️ Failed to export packages list: $_"
+    }
+
+    # --- Финальная статистика ---
+    Write-Host "`n📊 Installation Summary:" -ForegroundColor Cyan
+    Write-Host ("=" * 50) -ForegroundColor Cyan
+
+    $totalPackages = 0
+    foreach ($group in $packageGroups.Keys) {
+        $totalPackages += $packageGroups[$group].Count
+    }
+    $totalPackages += $fonts.Count
+
+    Write-Host "Total packages attempted: $totalPackages" -ForegroundColor Yellow
+    Write-Host "Total groups: $($packageGroups.Keys.Count)" -ForegroundColor Yellow
+    Write-Host "Fonts installed: $($fonts.Count)" -ForegroundColor Yellow
+    Write-Host "Log file: $logFile" -ForegroundColor Yellow
+
+    Write-Host "`n✅ All Windows packages installation completed!" -ForegroundColor Green
+    Write-Host "Completion time: $(Get-Date)" -ForegroundColor Yellow
+
+} else {
+    Write-Warning "⚠️ Scoop is not installed!"
+    Write-Host "Please run the following command to install Scoop:" -ForegroundColor Cyan
+    Write-Host "iwr -useb get.scoop.sh | iex" -ForegroundColor Yellow
+    Write-Host "`nAfter installing Scoop, run this script again." -ForegroundColor Cyan
 }
-else {
-    Write-Warning "Scoop is not installed. Please run: iwr -useb get.scoop.sh | iex"
-}
+
+# --- Остановка логирования ---
+Stop-Transcript
+
+Write-Host "`n📄 Full installation log saved to: $logFile" -ForegroundColor Green
 
 {{- end }}

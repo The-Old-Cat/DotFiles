@@ -16,6 +16,17 @@ else
     echo "Running in native Linux environment"
 fi
 
+# --- Функция для установки пакетов с проверкой ---
+install_package() {
+    if sudo apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
+        echo "✓ Installed: $*"
+        return 0
+    else
+        echo "⚠️ Failed to install: $*"
+        return 1
+    fi
+}
+
 # --- Установка шрифта (только если НЕ WSL) ---
 if [ "$IS_WSL" = false ]; then
     echo "Installing JetBrainsMono Nerd Font..."
@@ -50,24 +61,8 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 
     # --- Базовые пакеты (общие для всех) ---
     echo "Installing common packages..."
-    sudo apt-get install -y --no-install-recommends \
-        git \
-        curl \
-        wget \
-        htop \
-        jq \
-        age \
-        restic \
-        gh \
-        unzip \
-        tmux \
-        fontconfig \
-        build-essential \
-        python3-pip \
-        ripgrep \
-        fzf \
-        fd-find \
-        golang-go
+    install_package git curl curlie wget htop jq age restic gh unzip tmux fontconfig \
+        build-essential python3-pip ripgrep fzf fd-find golang-go
 
     # Проверить версию Go
     if command -v go >/dev/null 2>&1; then
@@ -80,7 +75,6 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     if ! command -v hx >/dev/null 2>&1; then
         echo "Installing Helix editor from GitHub release..."
 
-        # Определяем архитектуру
         ARCH=$(uname -m)
         case "$ARCH" in
             x86_64)  HELIX_ARCH="x86_64" ;;
@@ -88,32 +82,26 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             *)       echo "⚠️ Unsupported architecture: $ARCH"; exit 1 ;;
         esac
 
-        # Получаем последнюю версию
         HELIX_VERSION=$(curl -s https://api.github.com/repos/helix-editor/helix/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
 
         if [ -z "$HELIX_VERSION" ]; then
             echo "⚠️ Failed to get Helix version, skipping..."
         else
-            # Скачиваем архив
             ARCHIVE="helix-${HELIX_VERSION}-${HELIX_ARCH}-linux.tar.xz"
             URL="https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/${ARCHIVE}"
 
             echo "Downloading $URL ..."
             curl -fLo /tmp/helix.tar.xz "$URL"
 
-            # Распаковываем во временную папку
             mkdir -p /tmp/helix-extract
             tar -xf /tmp/helix.tar.xz -C /tmp/helix-extract
 
-            # Копируем бинарник в /usr/local/bin
             sudo cp "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/hx" /usr/local/bin/
             sudo chmod +x /usr/local/bin/hx
 
-            # Копируем runtime (языковые серверы, подсветка и т.д.)
             sudo mkdir -p /usr/local/share/helix
             sudo cp -r "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/runtime" /usr/local/share/helix/
 
-            # Чистим временные файлы
             rm -rf /tmp/helix-extract /tmp/helix.tar.xz
 
             echo "✓ Helix installed: $(hx --version 2>/dev/null | head -1)"
@@ -140,20 +128,11 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # --- Установка пакетов в зависимости от окружения ---
     if [ "$IS_WSL" = false ]; then
         echo "Installing native Linux packages..."
-        sudo apt-get install -y --no-install-recommends \
-            wezterm \
-            starship \
-            flameshot \
-            xclip
+        install_package wezterm starship flameshot xclip
     else
         echo "Installing WSL-specific packages..."
         echo "Installing Docker for WSL..."
-        sudo apt-get install -y --no-install-recommends \
-            docker.io \
-            docker-compose-v2 \
-            dos2unix \
-            x11-apps \
-            dbus-user-session
+        install_package docker.io docker-compose-v2 dos2unix x11-apps dbus-user-session
         sudo usermod -aG docker $USER
         echo "✓ Docker installed. You may need to restart your WSL session."
 
@@ -233,9 +212,7 @@ EOF
     # --- Proxmox-хосты ---
     {{- if contains "proxmox" (lower .chezmoi.hostname) }}
     echo "Installing Proxmox tools..."
-    sudo apt-get install -y --no-install-recommends \
-        pve-manager-tools \
-        qemu-guest-agent
+    install_package pve-manager-tools qemu-guest-agent
     {{- end }}
 
     echo "✓ Linux run-once completed"
@@ -245,7 +222,6 @@ EOF
     echo "OS: {{ .chezmoi.os }}"
     echo "Environment: $( [ "$IS_WSL" = true ] && echo "WSL" || echo "Native Linux" )"
     echo "Hostname: {{ .chezmoi.hostname }}"
-    echo "Packages installed: success"
     echo "To apply all configurations, run: chezmoi apply -v"
     echo "=== END ==="
 

@@ -9,7 +9,7 @@
 
 - [📦 Структура репозитория](#-структура-репозитория)
 - [🚀 Быстрый старт](#-быстрый-старт)
-  - [Linux / macOS / WSL](#linux--macos--wsl)
+  - [Linux / WSL](#linux-wsl)
   - [Windows](#windows)
 - [🔄 Ежедневное использование](#-ежедневное-использование)
 - [📝 Работа с файлами](#-работа-с-файлами)
@@ -30,18 +30,24 @@ dotfiles/
 ├── dot_gitconfig.tmpl                 # ~/.gitconfig (с шаблонами для имени и email)
 ├── private_dot_config/                # Содержимое ~/.config/
 │   ├── chezmoi/
-│   │   └── chezmoi.toml              # Конфиг chezmoi (управляется через шаблон)
-│   ├── tmux/                         # Конфигурация терминального мультиплексора tmux
-│   └── alacritty/                    # Конфигурация терминала Alacritty
-│       ├── alacritty.linux.yml       # Конфиг для Linux (нативная установка)
-│       └── alacritty.windows.yml     # Конфиг для Windows (через Scoop)
-├── run_once_after_10-base-packages.sh.tmpl  # Установка базовых пакетов (Linux)
+│   │   └── chezmoi.toml              # Конфиг chezmoi
+│   ├── helix/
+│   │   ├── config.toml               # Конфиг редактора Helix
+│   │   └── themes/                   # Пользовательские темы
+│   │       └── gruvbox.toml
+│   ├── starship/
+│   │   └── starship.toml             # Конфиг Starship
+│   ├── tmux/
+│   │   └── tmux.conf                 # Конфиг tmux
+│   └── wezterm/
+│       └── wezterm.lua               # Конфиг WezTerm (кроссплатформенный)
+├── run_once_after_10-base-packages.sh.tmpl  # Установка пакетов (Linux/WSL)
 └── run_once_after_20-windows-packages.ps1.tmpl # Установка пакетов (Windows)
 ```
 
 ## 🚀 Быстрый старт
 
-### Linux / macOS / WSL
+### Linux / WSL
 
 1. **Установите Chezmoi:**
    ```bash
@@ -61,10 +67,11 @@ dotfiles/
 
 ### Windows
 
-1. **Установите Scoop (менеджер пакетов):**
+1. **Установите Scoop (менеджер пакетов) и chezmoi :**
    ```powershell
    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
    iwr -useb get.scoop.sh | iex
+   scoop install main/chezmoi
    ```
 
 2. **Инициализируйте и примените конфигурацию (в Git Bash):**
@@ -98,12 +105,12 @@ chezmoi add ~/.bashrc
 chezmoi add --autotemplate ~/.gitconfig
 
 # Добавить целую директорию
-chezmoi add ~/.config/nvim/
+chezmoi add ~/.config/helix/
 
 # Зафиксировать и отправить изменения в удаленный репозиторий
 chezmoi cd
 git add -A
-git commit -m "feat: update nvim configuration"
+git commit -m "feat: update helix configuration"
 git push
 ```
 
@@ -111,54 +118,150 @@ git push
 
 Скрипты с префиксом `run_once_` выполняются только один раз после первого применения (`chezmoi apply`). Состояние их выполнения хранится в `~/.config/chezmoi/chezmoistate.boltdb`.
 
-### Linux (`run_once_after_10-base-packages.sh.tmpl`)
+### Linux / WSL (`run_once_after_10-base-packages.sh.tmpl`)
 
-Устанавливает базовые пакеты для Linux (Ubuntu/Debian) с помощью `apt-get`:
+#### 1. Базовые пакеты (16 пакетов)
+| Пакет | Описание |
+| :--- | :--- |
+| `git` | Система контроля версий |
+| `curl` | Передача данных по URL |
+| `wget` | Загрузка файлов |
+| `htop` | Интерактивный монитор процессов |
+| `jq` | Обработка JSON в командной строке |
+| `age` | Инструмент шифрования файлов |
+| `restic` | Резервное копирование |
+| `gh` | GitHub CLI |
+| `unzip` | Распаковка ZIP-архивов |
+| `tmux` | Терминальный мультиплексор |
+| `fontconfig` | Утилиты для настройки и управления шрифтами |
+| `build-essential` | Пакет компиляторов и утилит для сборки ПО |
+| `python3-pip` | Менеджер пакетов Python |
+| `ripgrep` | Быстрый поиск в файлах |
+| `fzf` | Fuzzy-поиск в командной строке |
+| `fd-find` | Альтернатива find |
+| `golang-go` | Компилятор и инструменты для Go |
 
-- **Базовые пакеты**: git, curl, wget, htop, jq, age, restic, gh, unzip, tmux, fontconfig
-- **Терминал**: Alacritty (только для нативного Linux, не в WSL)
-- **Python-инструменты**: `uv` (современный менеджер пакетов) + Python 3.12
-- **Шрифты**: Hasklug Nerd Font (только для нативного Linux, не в WSL)
-- **Условная логика**:
-  - WSL → пропускает установку терминала и шрифтов
-  - Proxmox → добавляет `pve-manager-tools`
-  - WSL-хост `ADM00-01IT` → добавляет Docker
+#### 2. Терминалы и редакторы (2 пакета)
+| Пакет | Описание |
+| :--- | :--- |
+| `wezterm` | Терминал с GPU-рендерингом (только для нативного Linux, пропускается в WSL) |
+| `helix` | Текстовый редактор (устанавливается из официальных релизов без Snap) |
 
+#### 3. Python-инструменты (2 компонента)
+| Компонент | Описание |
+| :--- | :--- |
+| `uv` | Быстрый менеджер пакетов и окружений Python |
+| `python 3.12` | Интерпретатор Python версии 3.12 |
+
+#### 4. Шрифты (1 пакет)
+| Пакет | Описание |
+| :--- | :--- |
+| `JetBrainsMono-NF` | Шрифт JetBrains Mono с иконками Nerd Font (только для нативного Linux, пропускается в WSL) |
+
+#### 5. Специфичные компоненты по окружениям (4 пакета)
+| Условие / Окружение | Пакеты / Компоненты | Описание |
+| :--- | :--- | :--- |
+| **WSL** | `docker`, `wsl-open` | Контейнеризация и открытие ссылок/файлов в Windows из WSL |
+| **Proxmox** | `pve-manager-tools`, `qemu-guest-agent` | Утилиты управления PVE и агент интеграции с гипервизором |
 ### Windows (`run_once_after_20-windows-packages.ps1.tmpl`)
 
-Устанавливает пакеты для Windows через **Scoop**:
+#### 📦 Пакеты (Windows, scoop)
 
-```powershell
-# Пакеты для разработки
-git, gh, vscode, pwsh, uv
+#### 1. Основные инструменты (18 пакетов)
+| Пакет | Описание |
+| :--- | :--- |
+| `git` | Система контроля версий |
+| `gh` | GitHub CLI |
+| `fd` | Альтернатива find |
+| `ripgrep` | Быстрый поиск в файлах |
+| `fzf` | Fuzzy-поиск в командной строке |
+| `restic` | Резервное копирование |
+| `windows-terminal` | Современный терминал от Microsoft |
+| `wezterm` | Терминал с GPU-рендерингом |
+| `uv` | Быстрый менеджер пакетов Python |
+| `advanced-ip-scanner` | Сканер сети |
+| `unlocker` | Разблокировка файлов |
+| `pwsh` | PowerShell 7 |
+| `vscode` | Редактор кода |
+| `curl` | Передача данных по URL |
+| `sudo` | Выполнение команд с правами администратора |
+| `grep` | Поиск текста |
+| `aria2` | Многопоточная загрузка |
+| `7zip` | Архиватор |
 
-# Утилиты командной строки
-fd, ripgrep, fzf, curl, sudo, grep, aria2, 7zip
+#### 2. CLI-улучшения (7 пакетов)
+| Пакет | Описание |
+| :--- | :--- |
+| `jq` | Обработка JSON в командной строке |
+| `yq` | Обработка YAML/TOML/XML |
+| `zoxide` | Быстрая навигация по директориям |
+| `dust` | Анализ использования диска |
+| `procs` | Альтернатива ps |
+| `bat` | cat с подсветкой синтаксиса |
+| `starship` | Минималистичный промпт для оболочки |
 
-# Терминалы
-windows-terminal, alacritty
+#### 3. Сеть и утилиты (5 пакетов)
+| Пакет | Описание |
+| :--- | :--- |
+| `nmap` | Сканирование портов и сети |
+| `curlie` | curl с человеческим интерфейсом |
+| `wget` | Загрузка файлов |
+| `yt-dlp` | Загрузка видео с YouTube |
+| `ffmpeg` | Обработка видео/аудио |
 
-# Дополнительно
-age, restic, advanced-ip-scanner, Hasklig-NF (шрифт)
-```
+#### 4. Безопасность и продуктивность (3 пакета)
+| Пакет | Описание |
+| :--- | :--- |
+| `bitwarden-cli` | Менеджер паролей (CLI) |
+| `obsidian` | База знаний в Markdown |
+| `flow-launcher` | Быстрый запуск приложений |
 
+#### 5. Разработка (2 пакета)
+| Пакет | Описание |
+| :--- | :--- |
+| `nodejs-lts` | Node.js LTS версия |
+| `go` | Язык программирования Go |
+
+#### 6. Sysinternals (9 пакетов)
+| Пакет | Описание |
+| :--- | :--- |
+| `process-explorer` | Расширенный диспетчер задач |
+| `autoruns` | Управление автозагрузкой |
+| `tcpview` | Мониторинг TCP-соединений |
+| `handle` | Информация о открытых файлах |
+| `du` | Анализ использования диска |
+| `procmon` | Мониторинг процессов |
+| `psservice` | Управление сервисами |
+| `rammap` | Анализ использования памяти |
+| `sysmon` | Системный мониторинг |
+
+#### 7. Шрифты Nerd Fonts (3 пакета)
+| Пакет | Описание |
+| :--- | :--- |
+| `Cascadia-Code` | Шрифт от Microsoft |
+| `JetBrainsMono-NF` | Шрифт для разработчиков |
+| `JetBrainsMono-NF-Mono` | Моноширинная версия |
 **Автоматическая настройка:**
 - Регистрация VS Code в системе (контекстное меню, ассоциации файлов, интеграция с GitHub)
-- Создание симлинка `alacritty.yml` → `alacritty.windows.yml`
+- Создание Microsoft.PowerShell_profile.ps1
 
 ### Примеры работы с run_once скриптами
 
 ```bash
 # Просмотр сгенерированного скрипта для текущего хоста
+chezmoi cd
 chezmoi execute-template < run_once_after_10-base-packages.sh.tmpl
 
 # Симуляция выполнения на Windows
+chezmoi cd
 chezmoi execute-template --init --promptString "os=windows,hostname=WIN-PC" < run_once_after_20-windows-packages.ps1.tmpl
 
 # Ручной запуск сгенерированного скрипта (Linux)
+chezmoi cd
 chezmoi execute-template < run_once_after_10-base-packages.sh.tmpl | bash
 
 # Ручной запуск сгенерированного скрипта (Windows)
+chezmoi cd
 chezmoi execute-template < run_once_after_20-windows-packages.ps1.tmpl | powershell -Command -
 ```
 
@@ -199,10 +302,12 @@ chezmoi data
 - **[Git](https://git-scm.com/)** — система контроля версий.
 - **[GitHub CLI (gh)](https://cli.github.com/)** — для аутентификации и работы с GitHub.
 - **[VS Code](https://code.visualstudio.com/)** — редактор по умолчанию.
+- **[Helix](https://helix-editor.com/)** — современный терминальный редактор.
 - **[tmux](https://github.com/tmux/tmux/wiki)** — терминальный мультиплексор.
-- **[Alacritty](https://alacritty.org/)** — кроссплатформенный терминал с GPU-рендерингом.
+- **[WezTerm](https://wezfurlong.org/wezterm/)** — кроссплатформенный терминал с мультиплексором.
 - **[Windows Terminal](https://github.com/microsoft/terminal)** — современный терминал для Windows.
 - **[Scoop](https://scoop.sh/)** — менеджер пакетов для Windows.
+- **[Starship](https://starship.rs/)** — кастомный промпт для оболочки.
 - **[uv](https://github.com/astral-sh/uv)** — быстрый менеджер пакетов для Python.
 - **[age](https://github.com/FiloSottile/age)** — простое и современное шифрование файлов.
 - **[restic](https://restic.net/)** — резервное копирование с шифрованием.
