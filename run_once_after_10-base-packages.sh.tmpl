@@ -73,11 +73,15 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         echo "Installing lsd..."
         # Скачиваем последний релиз lsd
         LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
-        curl -fLo /tmp/lsd.deb "https://github.com/lsd-rs/lsd/releases/download/${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb"
-        sudo dpkg -i /tmp/lsd.deb 2>/dev/null || true
-        sudo apt-get install -f -y  # Исправляем зависимости
-        rm -f /tmp/lsd.deb
-        echo "✓ lsd installed"
+        if [ -n "$LSD_VERSION" ]; then
+            curl -fLo /tmp/lsd.deb "https://github.com/lsd-rs/lsd/releases/download/${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb"
+            sudo dpkg -i /tmp/lsd.deb 2>/dev/null || true
+            sudo apt-get install -f -y  # Исправляем зависимости
+            rm -f /tmp/lsd.deb
+            echo "✓ lsd installed"
+        else
+            echo "⚠️ Failed to get lsd version, skipping..."
+        fi
     fi
 
     # --- Установка пакетов в зависимости от окружения ---
@@ -104,11 +108,20 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         sudo usermod -aG docker $USER
         echo "✓ Docker installed. You may need to restart your WSL session."
 
-        # --- Установка wsl-open (через скрипт, а не apt) ---
+        # --- Установка wsl-open (пробуем несколько способов) ---
         if ! command -v wsl-open >/dev/null 2>&1; then
             echo "Installing wsl-open..."
-            curl -s https://raw.githubusercontent.com/4U6U57/wsl-open/master/install.sh | bash
-            echo "✓ wsl-open installed"
+            # Способ 1: через скрипт (может не работать)
+            if curl -sSL https://raw.githubusercontent.com/4U6U57/wsl-open/master/wsl-open.sh -o ~/.local/bin/wsl-open 2>/dev/null; then
+                chmod +x ~/.local/bin/wsl-open
+                sudo ln -sf ~/.local/bin/wsl-open /usr/local/bin/wsl-open 2>/dev/null || true
+                echo "✓ wsl-open installed via script"
+            else
+                # Способ 2: через xdg-open (запасной вариант)
+                echo "⚠️ wsl-open installation failed, using xdg-open as fallback"
+                alias open="xdg-open"
+                echo 'alias open="xdg-open"' >> ~/.bashrc
+            fi
         fi
 
         # --- Настройка wsl.conf для systemd ---
@@ -130,12 +143,17 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 alias explorer="explorer.exe"
 alias code="code.exe"
 alias pwsh="pwsh.exe"
-alias open="wsl-open"
 alias clip="clip.exe"
 alias wclip="powershell.exe -command Get-Clipboard"
 alias ls="lsd"
 alias ll="lsd -la"
 alias tree="lsd --tree"
+# Если wsl-open установлен, используем его
+if command -v wsl-open >/dev/null 2>&1; then
+    alias open="wsl-open"
+else
+    alias open="xdg-open"
+fi
 EOF
             echo "✓ Added WSL aliases to .bashrc"
         fi
