@@ -47,7 +47,7 @@ foreach ($pkg in $prodPackages) {
 
 # --- Разработка ---
 Write-Host "Installing development tools..."
-$devPackages = @("nodejs-lts", "go")
+$devPackages = @("nodejs-lts", "go", "hugo-extended")
 foreach ($pkg in $devPackages) {
     Write-Host "Installing $pkg..."
     scoop install $pkg 2>&1 | Out-Null
