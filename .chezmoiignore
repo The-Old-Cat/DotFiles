@@ -1,13 +1,7 @@
-# Всегда игнорируем сгенерированные файлы
-*.sh
-*.ps1
-10-base-packages.sh
-20-windows-packages.ps1
-*-base-packages.sh
-
 # Условное игнорирование для Windows
 {{- if eq .chezmoi.os "windows" }}
 # Игнорируем Linux-скрипты
+*.sh
 run_once_after_10-base-packages.sh.tmpl
 *.sh.tmpl
 *.bash.tmpl
@@ -30,6 +24,7 @@ dot_profile*
 # Условное игнорирование для Linux
 {{- if eq .chezmoi.os "linux" }}
 # Игнорируем Windows-скрипты
+*.ps1
 run_once_after_20-windows-packages.ps1.tmpl
 *.ps1.tmpl
 AppData/
