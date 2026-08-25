@@ -14,6 +14,17 @@ is_wsl() {
     return 1
 }
 
+# Функция установки пакета, если его нет
+install_if_missing() {
+    local pkg="$1"
+    if ! dpkg -l | grep -q "^ii  $pkg "; then
+        echo "Installing $pkg..."
+        sudo apt-get install -y --no-install-recommends "$pkg"
+    else
+        echo "$pkg is already installed"
+    fi
+}
+
 # --- Ubuntu/Debian: базовые пакеты ---
 if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     # GitHub CLI: apt-репозиторий (только если gh ещё нет)
@@ -28,43 +39,59 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 
     echo "Installing base packages..."
     sudo apt-get update
-    sudo apt-get install -y --no-install-recommends \
-        git curl wget htop jq age restic gh unzip tmux fontconfig \
-        build-essential python3-pip ripgrep fzf fd-find golang-go lsd
+    for pkg in git curl wget htop jq age restic gh unzip tmux fontconfig \
+               build-essential python3-pip ripgrep fzf fd-find golang-go lsd; do
+        install_if_missing "$pkg"
+    done
 
     # WSL-специфичные пакеты
     if is_wsl; then
-        echo "Detected WSL environment, installing WSL-specific packages..."
-        sudo apt-get install -y --no-install-recommends \
-            docker.io docker-compose-v2
+        echo "Detected WSL environment..."
 
-        # Установка wslopen
-        if ! command -v wslopen >/dev/null 2>&1; then
-            echo "Installing wslopen..."
-            WSLOPEN_VERSION="v0.2.0"
-            curl -fLo /tmp/wslopen \
-                "https://github.com/mkletri/wslopen/releases/download/${WSLOPEN_VERSION}/wslopen-x86_64-unknown-linux-musl"
-            sudo install -m 755 /tmp/wslopen /usr/local/bin/wslopen
-            rm -f /tmp/wslopen
-            wslopen setup --browser --wslview-alias
-            echo "✓ wslopen installed and configured"
+        # Установка Docker
+        for pkg in docker.io docker-compose-v2; do
+            install_if_missing "$pkg"
+        done
+
+        # Создаем простой wsl-open скрипт
+        if ! command -v wsl-open >/dev/null 2>&1; then
+            echo "Creating wsl-open script..."
+            sudo tee /usr/local/bin/wsl-open > /dev/null << 'EOF'
+#!/bin/bash
+[ -z "$1" ] && { echo "Usage: wsl-open <path|url>"; exit 1; }
+cmd.exe /c start "" "$( [[ "$1" =~ ^https?:// ]] && echo "$1" || wslpath -w "$1" )" 2>/dev/null
+EOF
+            sudo chmod +x /usr/local/bin/wsl-open
+            echo "✓ wsl-open created"
+        fi
+
+        # Добавляем алиас в .bashrc
+        if ! grep -q "alias wsl-open=" ~/.bashrc 2>/dev/null; then
+            echo 'alias wsl-open="wsl-open"' >> ~/.bashrc
+            echo "✓ wsl-open alias added to .bashrc"
         fi
     fi
 
     # Proxmox-хосты: утилиты управления
     {{- if contains "proxmox" (lower .chezmoi.hostname) }}
     echo "Installing Proxmox tools..."
-    sudo apt-get install -y --no-install-recommends \
-        pve-manager-tools qemu-guest-agent
+    for pkg in pve-manager-tools qemu-guest-agent; do
+        install_if_missing "$pkg"
+    done
     {{- end }}
 
     # WezTerm: только для нативного Linux, пропускаем в WSL
     if ! is_wsl; then
-        echo "Installing WezTerm (native Linux)..."
-        curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
-        echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends wezterm
+        if ! command -v wezterm >/dev/null 2>&1; then
+            echo "Installing WezTerm (native Linux)..."
+            curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+            echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends wezterm
+            echo "✓ WezTerm installed"
+        else
+            echo "WezTerm is already installed"
+        fi
     else
         echo "Skipping WezTerm installation (WSL environment)"
     fi
@@ -77,12 +104,18 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz"
         sudo tar -xJf /tmp/helix.tar.xz -C /usr/local --strip-components=1
         rm -f /tmp/helix.tar.xz
+        echo "✓ Helix installed"
+    else
+        echo "Helix is already installed"
     fi
 
     # Установка uv (Python package manager)
     if ! command -v uv >/dev/null 2>&1; then
         echo "Installing uv..."
         curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "✓ uv installed"
+    else
+        echo "uv is already installed"
     fi
 
     # Шрифты: JetBrainsMono Nerd Font (только для нативного Linux)
@@ -96,6 +129,8 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             rm -f /tmp/JetBrainsMono.zip
             fc-cache -f ~/.local/share/fonts >/dev/null
             echo "✓ JetBrainsMono Nerd Font installed"
+        else
+            echo "JetBrainsMono Nerd Font is already installed"
         fi
     else
         echo "Skipping font installation (WSL environment - fonts are managed by Windows)"
