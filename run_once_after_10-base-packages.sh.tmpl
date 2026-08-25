@@ -1,54 +1,12 @@
 #!/usr/bin/env bash
 # run_once_after_10-base-packages.sh.tmpl
-# Условная установка пакетов и шрифтов: Linux only
+# Условная установка пакетов и шрифтов: Linux only (Windows — отдельный .ps1.tmpl)
 set -euo pipefail
-
-{{- if eq .chezmoi.os "linux" }}
-
+ {{- if eq .chezmoi.os "linux" }}
 echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
-
-# Определяем, запущен ли скрипт в WSL
-IS_WSL=false
-if grep -qi microsoft /proc/version 2>/dev/null; then
-    IS_WSL=true
-    echo "Running in WSL environment"
-else
-    echo "Running in native Linux environment"
-fi
-
-# --- Функция для установки пакетов с проверкой ---
-install_package() {
-    if sudo apt-get install -y --no-install-recommends "$@" 2>/dev/null; then
-        echo "✓ Installed: $*"
-        return 0
-    else
-        echo "⚠️ Failed to install: $*"
-        return 1
-    fi
-}
-
-# --- Установка шрифта (только если НЕ WSL) ---
-if [ "$IS_WSL" = false ]; then
-    echo "Installing JetBrainsMono Nerd Font..."
-    mkdir -p ~/.local/share/fonts/jetbrains-mono
-    curl -fLo /tmp/JetBrainsMono.zip \
-        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-    unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
-    rm -f /tmp/JetBrainsMono.zip
-    fc-cache -f ~/.local/share/fonts
-    echo "✓ JetBrainsMono Nerd Font installed"
-else
-    echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
-fi
-
 # --- Ubuntu/Debian: базовые пакеты ---
 if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
-
-    # --- Обновление репозиториев ---
-    echo "Updating package lists..."
-    sudo apt-get update
-
-    # --- GitHub CLI: apt-репозиторий (только если gh ещё нет) ---
+    # GitHub CLI: apt-репозиторий (только если gh ещё нет)
     if ! command -v gh >/dev/null 2>&1; then
         echo "Setting up GitHub CLI repository..."
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -56,182 +14,64 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
             | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-        sudo apt-get update
     fi
-
-    # --- Базовые пакеты (общие для всех) ---
-    echo "Installing common packages..."
-    install_package git curl curlie wget htop jq age restic gh unzip tmux fontconfig \
+    echo "Installing base packages..."
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends \
+        git curl wget htop jq age restic gh unzip tmux fontconfig \
         build-essential python3-pip ripgrep fzf fd-find golang-go
-
-    # Проверить версию Go
-    if command -v go >/dev/null 2>&1; then
-        echo "✓ Go installed: $(go version)"
-    else
-        echo "⚠️ Go installation failed"
-    fi
-
-    # --- Установка Helix (через tar.xz с GitHub) ---
-    if ! command -v hx >/dev/null 2>&1; then
-        echo "Installing Helix editor from GitHub release..."
-
-        ARCH=$(uname -m)
-        case "$ARCH" in
-            x86_64)  HELIX_ARCH="x86_64" ;;
-            aarch64) HELIX_ARCH="aarch64" ;;
-            *)       echo "⚠️ Unsupported architecture: $ARCH"; exit 1 ;;
-        esac
-
-        HELIX_VERSION=$(curl -s https://api.github.com/repos/helix-editor/helix/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
-
-        if [ -z "$HELIX_VERSION" ]; then
-            echo "⚠️ Failed to get Helix version, skipping..."
-        else
-            ARCHIVE="helix-${HELIX_VERSION}-${HELIX_ARCH}-linux.tar.xz"
-            URL="https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/${ARCHIVE}"
-
-            echo "Downloading $URL ..."
-            curl -fLo /tmp/helix.tar.xz "$URL"
-
-            mkdir -p /tmp/helix-extract
-            tar -xf /tmp/helix.tar.xz -C /tmp/helix-extract
-
-            sudo cp "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/hx" /usr/local/bin/
-            sudo chmod +x /usr/local/bin/hx
-
-            sudo mkdir -p /usr/local/share/helix
-            sudo cp -r "/tmp/helix-extract/helix-${HELIX_VERSION}-${HELIX_ARCH}-linux/runtime" /usr/local/share/helix/
-
-            rm -rf /tmp/helix-extract /tmp/helix.tar.xz
-
-            echo "✓ Helix installed: $(hx --version 2>/dev/null | head -1)"
-        fi
-    else
-        echo "Helix is already installed: $(hx --version 2>/dev/null | head -1)"
-    fi
-
-    # --- Установка lsd ---
-    if ! command -v lsd >/dev/null 2>&1; then
-        echo "Installing lsd..."
-        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
-        if [ -n "$LSD_VERSION" ]; then
-            curl -fLo /tmp/lsd.deb "https://github.com/lsd-rs/lsd/releases/download/${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb"
-            sudo dpkg -i /tmp/lsd.deb 2>/dev/null || true
-            sudo apt-get install -f -y
-            rm -f /tmp/lsd.deb
-            echo "✓ lsd installed"
-        else
-            echo "⚠️ Failed to get lsd version, skipping..."
-        fi
-    fi
-
-    # --- Установка пакетов в зависимости от окружения ---
-    if [ "$IS_WSL" = false ]; then
-        echo "Installing native Linux packages..."
-        install_package wezterm starship flameshot xclip
-    else
-        echo "Installing WSL-specific packages..."
-        echo "Installing Docker for WSL..."
-        install_package docker.io docker-compose-v2 dos2unix x11-apps dbus-user-session
-        sudo usermod -aG docker $USER
-        echo "✓ Docker installed. You may need to restart your WSL session."
-
-        # --- Установка wsl-open ---
-        if ! command -v wsl-open >/dev/null 2>&1; then
-            echo "Installing wsl-open..."
-            if curl -sSL https://raw.githubusercontent.com/4U6U57/wsl-open/master/wsl-open.sh -o ~/.local/bin/wsl-open 2>/dev/null; then
-                chmod +x ~/.local/bin/wsl-open
-                sudo ln -sf ~/.local/bin/wsl-open /usr/local/bin/wsl-open 2>/dev/null || true
-                echo "✓ wsl-open installed via script"
-            else
-                echo "⚠️ wsl-open installation failed, using xdg-open as fallback"
-                echo 'alias open="xdg-open"' >> ~/.bashrc
-            fi
-        fi
-
-        # --- Настройка wsl.conf ---
-        if [ -f /etc/wsl.conf ]; then
-            if ! grep -q "systemd=true" /etc/wsl.conf; then
-                echo -e "\n[boot]\nsystemd=true" | sudo tee -a /etc/wsl.conf > /dev/null
-                echo "✓ Enabled systemd in /etc/wsl.conf"
-            fi
-        else
-            echo -e "[boot]\nsystemd=true\n\n[interop]\nappendWindowsPath=true" | sudo tee /etc/wsl.conf > /dev/null
-            echo "✓ Created /etc/wsl.conf with systemd enabled"
-        fi
-
-        # --- Алиасы для WSL ---
-        if ! grep -q "# WSL aliases" ~/.bashrc 2>/dev/null; then
-            cat >> ~/.bashrc << 'EOF'
-
-# --- WSL aliases ---
-alias explorer="explorer.exe"
-alias code="code.exe"
-alias pwsh="pwsh.exe"
-alias clip="clip.exe"
-alias wclip="powershell.exe -command Get-Clipboard"
-alias ls="lsd"
-alias ll="lsd -la"
-alias tree="lsd --tree"
-if command -v wsl-open >/dev/null 2>&1; then
-    alias open="wsl-open"
-else
-    alias open="xdg-open"
-fi
-EOF
-            echo "✓ Added WSL aliases to .bashrc"
-        fi
-    fi
-
-    # --- Установка uv ---
-    if ! command -v uv >/dev/null 2>&1; then
-        echo "Installing uv (Python package manager)..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        export PATH="$HOME/.cargo/bin:$PATH"
-        if ! grep -q 'export PATH="$HOME/.cargo/bin:$PATH"' ~/.bashrc 2>/dev/null; then
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
-            echo "✓ Added ~/.cargo/bin to PATH in .bashrc"
-        fi
-        if command -v uv >/dev/null 2>&1; then
-            echo "✓ uv installed successfully"
-            uv --version
-        else
-            echo "⚠️ uv installed but not in PATH. Please restart your terminal or run: source ~/.bashrc"
-        fi
-    else
-        echo "uv is already installed"
-        uv --version
-    fi
-
-    # --- Установка Python через uv ---
-    if command -v uv >/dev/null 2>&1; then
-        echo "Pre-installing Python 3.12 via uv..."
-        uv python install 3.12 2>/dev/null || echo "Python 3.12 already installed or uv not ready"
-    fi
-
-    # --- Proxmox-хосты ---
-    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
-    echo "Installing Proxmox tools..."
-    install_package pve-manager-tools qemu-guest-agent
+    {{- if eq .chezmoi.hostname "ADM00-01IT" }}
+    # WSL-хост: Docker
+    echo "Installing Docker for WSL..."
+    sudo apt-get install -y --no-install-recommends \
+        docker.io docker-compose-v2
     {{- end }}
-
+    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
+    # Proxmox-хосты: утилиты управления
+    echo "Installing Proxmox tools..."
+    sudo apt-get install -y --no-install-recommends \
+        pve-manager-tools qemu-guest-agent
+    {{- end }}
+    # Установка WezTerm (только для нативного Linux, пропускается в WSL)
+    {{- if ne .chezmoi.hostname "ADM00-01IT" }}
+    echo "Installing WezTerm..."
+    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+    echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends wezterm
+    {{- end }}
+    # Установка Helix (из официальных релизов, без Snap)
+    if ! command -v helix >/dev/null 2>&1; then
+        echo "Installing Helix..."
+        HELIX_VERSION="24.07"
+        curl -fLo /tmp/helix.tar.xz \
+            "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz"
+        sudo tar -xJf /tmp/helix.tar.xz -C /usr/local --strip-components=1
+        rm -f /tmp/helix.tar.xz
+    fi
+    # Установка uv (Python package manager)
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "Installing uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+    fi
+    # Шрифты: JetBrainsMono Nerd Font (только для нативного Linux)
+    {{- if ne .chezmoi.hostname "ADM00-01IT" }}
+    if ! fc-list | grep -qi "JetBrainsMonoNF"; then
+        echo "Installing JetBrainsMono Nerd Font..."
+        mkdir -p ~/.local/share/fonts/jetbrainsmono
+        curl -fLo /tmp/JetBrainsMono.zip \
+            https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+        unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrainsmono
+        rm -f /tmp/JetBrainsMono.zip
+        fc-cache -f ~/.local/share/fonts >/dev/null
+        echo "✓ JetBrainsMono Nerd Font installed"
+    fi
+    {{- end }}
     echo "✓ Linux run-once completed"
-
-    echo ""
-    echo "=== SUMMARY ==="
-    echo "OS: {{ .chezmoi.os }}"
-    echo "Environment: $( [ "$IS_WSL" = true ] && echo "WSL" || echo "Native Linux" )"
-    echo "Hostname: {{ .chezmoi.hostname }}"
-    echo "To apply all configurations, run: chezmoi apply -v"
-    echo "=== END ==="
-
 else
     echo "ERROR: Unsupported Linux distro" >&2
     exit 1
 fi
-
 {{- else }}
-
 echo "Skipped: script is Linux-only, current OS is {{ .chezmoi.os }}"
-
 {{- end }}
