@@ -1,11 +1,37 @@
-# Условное игнорирование для Windows
-{{- if eq .chezmoi.os "windows" }}
-# Игнорируем Linux-скрипты
+# ============================================
+# Всегда игнорируем
+# ============================================
+README.md
+docs/**
+.chezmoi.toml.tmpl
+.git/
+.gitignore
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Сгенерированные файлы (всегда)
+# ============================================
 *.sh
-run_once_after_10-base-packages.sh.tmpl
+*.ps1
+
+
+# ============================================
+# Условное игнорирование для Windows
+# ============================================
+{{- if eq .chezmoi.os "windows" }}
+# Игнорируем все .sh.tmpl файлы
 *.sh.tmpl
 *.bash.tmpl
 *.zsh.tmpl
+
+# Но конкретно этот файл НЕ игнорируем
+!run_once_after_20-windows-packages.ps1.tmpl
+
+# Игнорируем Linux-конфиги
 tmux/
 helix/
 .config/helix/
@@ -19,22 +45,29 @@ dot_profile*
 .zprofile
 .local/
 .config/**/linux-only/
+
+# Игнорируем Linux-скрипт
+run_once_after_10-base-packages.sh.tmpl
 {{- end }}
 
+# ============================================
 # Условное игнорирование для Linux
+# ============================================
 {{- if eq .chezmoi.os "linux" }}
-# Игнорируем Windows-скрипты
-*.ps1
-run_once_after_20-windows-packages.ps1.tmpl
+# Игнорируем все .ps1.tmpl файлы
 *.ps1.tmpl
+
+# Но конкретно этот файл НЕ игнорируем
+!run_once_after_10-base-packages.sh.tmpl
+
+# Игнорируем Windows-конфиги
 AppData/
 Documents/
 pwsh/
 PowerShell/
 .config/WindowsTerminal/
 .config/PowerShell/
-*.ps1
-*.psd1
-*.psm1
-*.ps1xml
+
+# Игнорируем Windows-скрипт
+run_once_after_20-windows-packages.ps1.tmpl
 {{- end }}
