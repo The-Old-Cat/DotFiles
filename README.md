@@ -71,7 +71,7 @@ dotfiles/
    ```powershell
    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
    iwr -useb get.scoop.sh | iex
-   scoop install main/chezmoi
+   scoop install main/chezmoi git gh
    ```
 
 2. **Инициализируйте и примените конфигурацию (в Git Bash):**
