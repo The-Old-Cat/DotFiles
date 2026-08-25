@@ -5,18 +5,6 @@ set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
 
-# 1. Создаем директорию для шрифта
-mkdir -p ~/.local/share/fonts/jetbrains-mono
-
-# 2. Скачиваем архив шрифта
-curl -fLo /tmp/JetBrainsMono.zip \
-  https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-
-# 3. Распаковываем и обновляем кэш
-unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
-rm -f /tmp/JetBrainsMono.zip
-fc-cache -f ~/.local/share/fonts
-
 echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
 
 # Определяем, запущен ли скрипт в WSL
@@ -26,6 +14,20 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
     echo "Running in WSL environment"
 else
     echo "Running in native Linux environment"
+fi
+
+# --- Установка шрифта (только если НЕ WSL) ---
+if [ "$IS_WSL" = false ]; then
+    echo "Installing JetBrainsMono Nerd Font..."
+    mkdir -p ~/.local/share/fonts/jetbrains-mono
+    curl -fLo /tmp/JetBrainsMono.zip \
+        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+    unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrains-mono
+    rm -f /tmp/JetBrainsMono.zip
+    fc-cache -f ~/.local/share/fonts
+    echo "✓ JetBrainsMono Nerd Font installed"
+else
+    echo "Skipping font installation (running in WSL, fonts are managed on Windows)"
 fi
 
 # --- Ubuntu/Debian: базовые пакеты ---
@@ -50,7 +52,6 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     echo "Installing common packages..."
     sudo apt-get install -y --no-install-recommends \
         git \
-        lsd \
         curl \
         wget \
         htop \
@@ -62,7 +63,22 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         tmux \
         fontconfig \
         build-essential \
-        python3-pip
+        python3-pip \
+        ripgrep \
+        fzf \
+        fd-find
+
+    # --- Установка lsd (альтернатива ls) ---
+    if ! command -v lsd >/dev/null 2>&1; then
+        echo "Installing lsd..."
+        # Скачиваем последний релиз lsd
+        LSD_VERSION=$(curl -s https://api.github.com/repos/lsd-rs/lsd/releases/latest | grep -oP '"tag_name": "\K(.*?)(?=")')
+        curl -fLo /tmp/lsd.deb "https://github.com/lsd-rs/lsd/releases/download/${LSD_VERSION}/lsd_${LSD_VERSION}_amd64.deb"
+        sudo dpkg -i /tmp/lsd.deb 2>/dev/null || true
+        sudo apt-get install -f -y  # Исправляем зависимости
+        rm -f /tmp/lsd.deb
+        echo "✓ lsd installed"
+    fi
 
     # --- Установка пакетов в зависимости от окружения ---
     if [ "$IS_WSL" = false ]; then
@@ -74,18 +90,55 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
             xclip
     else
         echo "Installing WSL-specific packages..."
+
+        # --- Docker для WSL ---
+        echo "Installing Docker for WSL..."
         sudo apt-get install -y --no-install-recommends \
             docker.io \
             docker-compose-v2 \
             dos2unix \
-            wsl-open \
-            wslpath \
             x11-apps \
             dbus-user-session
 
         # Добавляем пользователя в группу docker
         sudo usermod -aG docker $USER
         echo "✓ Docker installed. You may need to restart your WSL session."
+
+        # --- Установка wsl-open (через скрипт, а не apt) ---
+        if ! command -v wsl-open >/dev/null 2>&1; then
+            echo "Installing wsl-open..."
+            curl -s https://raw.githubusercontent.com/4U6U57/wsl-open/master/install.sh | bash
+            echo "✓ wsl-open installed"
+        fi
+
+        # --- Настройка wsl.conf для systemd ---
+        if [ -f /etc/wsl.conf ]; then
+            if ! grep -q "systemd=true" /etc/wsl.conf; then
+                echo -e "\n[boot]\nsystemd=true" | sudo tee -a /etc/wsl.conf > /dev/null
+                echo "✓ Enabled systemd in /etc/wsl.conf"
+            fi
+        else
+            echo -e "[boot]\nsystemd=true\n\n[interop]\nappendWindowsPath=true" | sudo tee /etc/wsl.conf > /dev/null
+            echo "✓ Created /etc/wsl.conf with systemd enabled"
+        fi
+
+        # --- Алиасы для WSL ---
+        if ! grep -q "# WSL aliases" ~/.bashrc 2>/dev/null; then
+            cat >> ~/.bashrc << 'EOF'
+
+# --- WSL aliases ---
+alias explorer="explorer.exe"
+alias code="code.exe"
+alias pwsh="pwsh.exe"
+alias open="wsl-open"
+alias clip="clip.exe"
+alias wclip="powershell.exe -command Get-Clipboard"
+alias ls="lsd"
+alias ll="lsd -la"
+alias tree="lsd --tree"
+EOF
+            echo "✓ Added WSL aliases to .bashrc"
+        fi
     fi
 
     # --- Установка uv (менеджер пакетов Python) ---
@@ -127,37 +180,6 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         qemu-guest-agent
     {{- end }}
 
-
-    # --- Настройка .bashrc и системной конфигурации для WSL ---
-    if [ "$IS_WSL" = true ]; then
-
-        # Включение systemd и автоматической интерактивности межсетевых путей
-        if [ -f /etc/wsl.conf ]; then
-            if ! grep -q "systemd=true" /etc/wsl.conf; then
-                echo -e "\n[boot]\nsystemd=true" | sudo tee -a /etc/wsl.conf > /dev/null
-                echo "✓ Enabled systemd in /etc/wsl.conf"
-            fi
-        else
-            echo -e "[boot]\nsystemd=true\n\n[interop]\nappendWindowsPath=true" | sudo tee /etc/wsl.conf > /dev/null
-            echo "✓ Created /etc/wsl.conf with systemd enabled"
-        fi
-
-        # Расширенный набор псевдонимов для работы с файлами и буфером Windows
-        if ! grep -q "# WSL aliases" ~/.bashrc 2>/dev/null; then
-            cat >> ~/.bashrc << 'EOF'
-
-# --- WSL aliases ---
-alias explorer="explorer.exe"
-alias code="code.exe"
-alias pwsh="pwsh.exe"
-alias open="wsl-open"
-alias clip="clip.exe"
-alias wclip="powershell.exe -command Get-Clipboard"
-EOF
-            echo "✓ Added WSL aliases to .bashrc"
-        fi
-    fi
-
     echo "✓ Linux run-once completed"
 
     # --- Вывод итоговой информации ---
@@ -178,5 +200,5 @@ fi
 {{- else }}
 
 echo "Skipped: script is Linux-only, current OS is {{ .chezmoi.os }}"
-fc-cache -f ~/.local/share/fonts
+
 {{- end }}
