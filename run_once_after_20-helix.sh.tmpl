@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if eq .chezmoi.os "linux" }}
+if ! command -v helix >/dev/null 2>&1; then
+    echo "Installing Helix..."
+    HELIX_VERSION="24.07"
+    curl -fLo /tmp/helix.tar.xz \
+        "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz"
+    sudo tar -xJf /tmp/helix.tar.xz -C /usr/local --strip-components=1
+    rm -f /tmp/helix.tar.xz
+    echo "✓ Helix installed"
+else
+    echo "Helix is already installed"
+fi
+{{- end }}

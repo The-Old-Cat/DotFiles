@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if and (eq .chezmoi.os "linux") (not .is_wsl) }}
+if ! fc-list | grep -qi "JetBrainsMonoNF"; then
+    echo "Installing JetBrainsMono Nerd Font..."
+    mkdir -p ~/.local/share/fonts/jetbrainsmono
+    curl -fLo /tmp/JetBrainsMono.zip \
+        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+    unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrainsmono
+    rm -f /tmp/JetBrainsMono.zip
+    fc-cache -f ~/.local/share/fonts >/dev/null
+    echo "✓ JetBrainsMono Nerd Font installed"
+else
+    echo "JetBrainsMono Nerd Font is already installed"
+fi
+{{- else }}
+echo "Skipping font installation (WSL environment - fonts are managed by Windows)"
+{{- end }}

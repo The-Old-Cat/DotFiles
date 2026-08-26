@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if .has_gui }}
+if ! command -v wezterm >/dev/null 2>&1; then
+    echo "Installing WezTerm (Linux Desktop)..."
+    curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
+    echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends wezterm
+    echo "✓ WezTerm installed"
+else
+    echo "WezTerm is already installed"
+fi
+{{- else }}
+echo "Skipping WezTerm (Headless environment or WSL)"
+{{- end }}

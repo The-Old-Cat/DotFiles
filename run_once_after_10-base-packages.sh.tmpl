@@ -1,33 +1,9 @@
 #!/usr/bin/env bash
-# run_once_after_10-base-packages.sh.tmpl
-# Условная установка пакетов и шрифтов: Linux only (Windows — отдельный .ps1.tmpl)
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
-echo "OS: Linux | Hostname: {{ .chezmoi.hostname }}"
-
-# Функция определения WSL
-is_wsl() {
-    [ -f /proc/sys/fs/binfmt_misc/WSLInterop ] && return 0
-    grep -qi "microsoft" /proc/version 2>/dev/null && return 0
-    grep -qi "wsl" /proc/sys/kernel/osrelease 2>/dev/null && return 0
-    return 1
-}
-
-# Функция установки пакета, если его нет
-install_if_missing() {
-    local pkg="$1"
-    if ! dpkg -l | grep -q "^ii  $pkg "; then
-        echo "Installing $pkg..."
-        sudo apt-get install -y --no-install-recommends "$pkg"
-    else
-        echo "$pkg is already installed"
-    fi
-}
-
-# --- Ubuntu/Debian: базовые пакеты ---
 if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
-    # GitHub CLI: apt-репозиторий (только если gh ещё нет)
+    # Репозиторий GitHub CLI
     if ! command -v gh >/dev/null 2>&1; then
         echo "Setting up GitHub CLI repository..."
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
@@ -39,153 +15,21 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
 
     echo "Installing base packages..."
     sudo apt-get update
-    for pkg in git curl wget htop jq age restic gh unzip tmux fontconfig \
-               build-essential python3-pip ripgrep fzf fd-find golang-go lsd; do
-        install_if_missing "$pkg"
-    done
 
-     # --- Установка Hugo Extended ---
-    if ! command -v hugo >/dev/null 2>&1 || ! hugo version | grep -q "+extended"; then
-        echo "Installing Hugo Extended..."
+    # Базовые пакеты
+    PKGS=(git curl wget htop jq age restic gh unzip tmux fontconfig build-essential python3-pip ripgrep fzf fd-find golang-go lsd)
 
-        ARCH=$(dpkg --print-architecture)
-        if [ "$ARCH" = "amd64" ]; then
-            # Получаем URL последней версии через API GitHub
-            LATEST_URL=$(curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
-                | grep -o "https://.*hugo_extended_.*_linux-${ARCH}\.deb" \
-                | head -n1)
-
-            if [ -n "$LATEST_URL" ]; then
-                echo "Downloading from: $LATEST_URL"
-                curl -fLo /tmp/hugo_extended.deb "$LATEST_URL"
-
-                # Устанавливаем через dpkg
-                sudo dpkg -i /tmp/hugo_extended.deb 2>/dev/null || {
-                    echo "Fixing dependencies..."
-                    sudo apt-get install -f -y
-                    sudo dpkg -i /tmp/hugo_extended.deb
-                }
-
-                rm -f /tmp/hugo_extended.deb
-                echo "✓ Hugo Extended installed"
-
-                # Проверяем установку
-                if hugo version | grep -q "+extended"; then
-                    echo "✓ Hugo Extended successfully installed: $(hugo version | head -n1)"
-                else
-                    echo "⚠ Hugo installed but Extended features may not be available"
-                fi
-            else
-                echo "⚠ Could not find download URL for Hugo Extended"
-            fi
-        else
-            echo "⚠ Unsupported architecture: $ARCH. Skipping Hugo Extended installation."
-        fi
-    else
-        if command -v hugo >/dev/null 2>&1; then
-            echo "Hugo is already installed: $(hugo version | head -n1)"
-        else
-            echo "Hugo is already installed"
-        fi
-    fi
-
-    # WSL-специфичные пакеты
-    if is_wsl; then
-        echo "Detected WSL environment..."
-
-        # Установка Docker
-        for pkg in docker.io docker-compose-v2; do
-            install_if_missing "$pkg"
-        done
-
-        # Создаем простой wsl-open скрипт
-        if ! command -v wsl-open >/dev/null 2>&1; then
-            echo "Creating wsl-open script..."
-            sudo tee /usr/local/bin/wsl-open > /dev/null << 'EOF'
-#!/bin/bash
-[ -z "$1" ] && { echo "Usage: wsl-open <path|url>"; exit 1; }
-cmd.exe /c start "" "$( [[ "$1" =~ ^https?:// ]] && echo "$1" || wslpath -w "$1" )" 2>/dev/null
-EOF
-            sudo chmod +x /usr/local/bin/wsl-open
-            echo "✓ wsl-open created"
-        fi
-
-        # Добавляем алиас в .bashrc
-        if ! grep -q "alias wsl-open=" ~/.bashrc 2>/dev/null; then
-            echo 'alias wsl-open="wsl-open"' >> ~/.bashrc
-            echo "✓ wsl-open alias added to .bashrc"
-        fi
-    fi
-
-    # Proxmox-хосты: утилиты управления
     {{- if contains "proxmox" (lower .chezmoi.hostname) }}
-    echo "Installing Proxmox tools..."
-    for pkg in pve-manager-tools qemu-guest-agent; do
-        install_if_missing "$pkg"
-    done
+    PKGS+=(pve-manager-tools qemu-guest-agent)
     {{- end }}
 
-    # WezTerm: только для нативного Linux, пропускаем в WSL
-    if ! is_wsl; then
-        if ! command -v wezterm >/dev/null 2>&1; then
-            echo "Installing WezTerm (native Linux)..."
-            curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
-            echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list
-            sudo apt-get update
-            sudo apt-get install -y --no-install-recommends wezterm
-            echo "✓ WezTerm installed"
+    for pkg in "${PKGS[@]}"; do
+        if ! dpkg -l | grep -q "^ii  $pkg "; then
+            echo "Installing $pkg..."
+            sudo apt-get install -y --no-install-recommends "$pkg"
         else
-            echo "WezTerm is already installed"
+            echo "$pkg is already installed"
         fi
-    else
-        echo "Skipping WezTerm installation (WSL environment)"
-    fi
-
-    # Установка Helix (из официальных релизов, без Snap)
-    if ! command -v helix >/dev/null 2>&1; then
-        echo "Installing Helix..."
-        HELIX_VERSION="24.07"
-        curl -fLo /tmp/helix.tar.xz \
-            "https://github.com/helix-editor/helix/releases/download/${HELIX_VERSION}/helix-${HELIX_VERSION}-x86_64-linux.tar.xz"
-        sudo tar -xJf /tmp/helix.tar.xz -C /usr/local --strip-components=1
-        rm -f /tmp/helix.tar.xz
-        echo "✓ Helix installed"
-    else
-        echo "Helix is already installed"
-    fi
-
-    # Установка uv (Python package manager)
-    if ! command -v uv >/dev/null 2>&1; then
-        echo "Installing uv..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "✓ uv installed"
-    else
-        echo "uv is already installed"
-    fi
-
-    # Шрифты: JetBrainsMono Nerd Font (только для нативного Linux)
-    if ! is_wsl; then
-        if ! fc-list | grep -qi "JetBrainsMonoNF"; then
-            echo "Installing JetBrainsMono Nerd Font (native Linux)..."
-            mkdir -p ~/.local/share/fonts/jetbrainsmono
-            curl -fLo /tmp/JetBrainsMono.zip \
-                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-            unzip -qo /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/jetbrainsmono
-            rm -f /tmp/JetBrainsMono.zip
-            fc-cache -f ~/.local/share/fonts >/dev/null
-            echo "✓ JetBrainsMono Nerd Font installed"
-        else
-            echo "JetBrainsMono Nerd Font is already installed"
-        fi
-    else
-        echo "Skipping font installation (WSL environment - fonts are managed by Windows)"
-    fi
-
-    echo "✓ Linux run-once completed"
-else
-    echo "ERROR: Unsupported Linux distro" >&2
-    exit 1
+    done
 fi
-{{- else }}
-echo "Skipped: script is Linux-only, current OS is {{ .chezmoi.os }}"
 {{- end }}

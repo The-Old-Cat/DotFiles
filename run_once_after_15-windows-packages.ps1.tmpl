@@ -1,0 +1,76 @@
+# run_once_after_20-windows-packages.ps1.tmpl — Windows only
+{{- if eq .chezmoi.os "windows" }}
+
+$ErrorActionPreference = "Stop"
+
+# Проверяем, установлен ли scoop
+if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+    Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
+    return
+}
+
+# --- 1. Подключение бакетов ---
+Write-Host "Ensuring required Scoop buckets are added..."
+$buckets = (scoop bucket list 2>$null).Name
+
+$requiredBuckets = @("extras", "nerd-fonts")
+foreach ($bucket in $requiredBuckets) {
+    if ($buckets -notcontains $bucket) {
+        Write-Host "Adding bucket: $bucket"
+        scoop bucket add $bucket | Out-Null
+    }
+}
+
+# --- 2. Формирование единого списка пакетов ---
+Write-Host "Installing packages via Scoop..."
+
+$packages = @(
+    # Core & Tools
+    "git", "gh", "fd", "ripgrep", "fzf", "restic",
+    "windows-terminal", "wezterm", "uv", "pwsh", "vscode",
+    "curl", "sudo", "grep", "aria2", "7zip", "inkscape",
+
+    # CLI improvements
+    "jq", "yq", "zoxide", "dust", "procs", "bat", "starship", "lsd",
+
+    # Network & Utilities
+    "nmap", "curlie", "wget", "yt-dlp", "ffmpeg",
+
+    # Security & Productivity
+    "bitwarden-cli", "obsidian", "flow-launcher",
+
+    # Development
+    "nodejs-lts", "go", "hugo-extended",
+
+    # Sysinternals
+    "process-explorer", "autoruns", "tcpview",
+    "handle", "du", "procmon", "psservice",
+    "rammap", "sysmon",
+
+    # Nerd Fonts
+    "Cascadia-Code", "JetBrainsMono-NF", "JetBrainsMono-NF-Mono"
+)
+
+# Пакетный запуск установки
+foreach ($pkg in $packages) {
+    Write-Host "Checking / Installing $pkg..."
+    scoop install $pkg 2>&1 | Out-Null
+}
+
+# --- 3. Автоматическая настройка VS Code ---
+if (Get-Command code -ErrorAction SilentlyContinue) {
+    Write-Host "Configuring VS Code extensions..."
+    $extensions = @(
+        "ms-vscode.powershell",
+        "batisteo.vscode-helix",
+        "eamodio.gitlens"
+    )
+    foreach ($ext in $extensions) {
+        code --install-extension $ext --force 2>&1 | Out-Null
+    }
+} else {
+    Write-Warning "VS Code (code) command not found in current PATH. Skipping extensions installation."
+}
+
+Write-Host "✓ All Windows packages processed successfully."
+{{- end }}

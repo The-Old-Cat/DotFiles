@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if eq .chezmoi.os "linux" }}
+if ! command -v hugo >/dev/null 2>&1 || ! hugo version | grep -q "+extended"; then
+    echo "Installing Hugo Extended..."
+    ARCH=$(dpkg --print-architecture)
+    if [ "$ARCH" = "amd64" ]; then
+        LATEST_URL=$(curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
+            | grep -o "https://.*hugo_extended_.*_linux-${ARCH}\.deb" | head -n1)
+
+        if [ -n "$LATEST_URL" ]; then
+            echo "Downloading from: $LATEST_URL"
+            curl -fLo /tmp/hugo_extended.deb "$LATEST_URL"
+            sudo dpkg -i /tmp/hugo_extended.deb 2>/dev/null || {
+                echo "Fixing dependencies..."
+                sudo apt-get install -f -y
+                sudo dpkg -i /tmp/hugo_extended.deb
+            }
+            rm -f /tmp/hugo_extended.deb
+
+            if hugo version | grep -q "+extended"; then
+                echo "✓ Hugo Extended successfully installed: $(hugo version | head -n1)"
+            else
+                echo "⚠ Hugo installed but Extended features may not be available"
+            fi
+        else
+            echo "⚠ Could not find download URL for Hugo Extended"
+        fi
+    else
+        echo "⚠ Unsupported architecture: $ARCH. Skipping Hugo Extended installation."
+    fi
+else
+    echo "Hugo Extended is already installed: $(hugo version | head -n1)"
+fi
+{{- end }}

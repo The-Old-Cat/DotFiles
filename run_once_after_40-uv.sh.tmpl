@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{{- if eq .chezmoi.os "linux" }}
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    echo "✓ uv installed"
+else
+    echo "uv is already installed"
+fi
+{{- end }}
