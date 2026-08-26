@@ -44,33 +44,39 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         install_if_missing "$pkg"
     done
 
- # --- Установка Hugo Extended ---
+     # --- Установка Hugo Extended ---
     if ! command -v hugo >/dev/null 2>&1 || ! hugo version | grep -q "+extended"; then
         echo "Installing Hugo Extended..."
 
-        # Проверяем архитектуру
         ARCH=$(dpkg --print-architecture)
         if [ "$ARCH" = "amd64" ]; then
-            # Скачиваем последнюю версию Hugo Extended
-            curl -fLo /tmp/hugo_extended.deb \
-                "https://github.com/gohugoio/hugo/releases/latest/download/hugo_extended_*_linux-${ARCH}.deb"
+            # Получаем URL последней версии через API GitHub
+            LATEST_URL=$(curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
+                | grep -o "https://.*hugo_extended_.*_linux-${ARCH}\.deb" \
+                | head -n1)
 
-            # Устанавливаем через dpkg
-            sudo dpkg -i /tmp/hugo_extended.deb 2>/dev/null || {
-                # Если не получилось из-за зависимостей - исправляем
-                echo "Fixing dependencies..."
-                sudo apt-get install -f -y
-                sudo dpkg -i /tmp/hugo_extended.deb
-            }
+            if [ -n "$LATEST_URL" ]; then
+                echo "Downloading from: $LATEST_URL"
+                curl -fLo /tmp/hugo_extended.deb "$LATEST_URL"
 
-            rm -f /tmp/hugo_extended.deb
-            echo "✓ Hugo Extended installed"
+                # Устанавливаем через dpkg
+                sudo dpkg -i /tmp/hugo_extended.deb 2>/dev/null || {
+                    echo "Fixing dependencies..."
+                    sudo apt-get install -f -y
+                    sudo dpkg -i /tmp/hugo_extended.deb
+                }
 
-            # Проверяем установку
-            if hugo version | grep -q "+extended"; then
-                echo "✓ Hugo Extended successfully installed"
+                rm -f /tmp/hugo_extended.deb
+                echo "✓ Hugo Extended installed"
+
+                # Проверяем установку
+                if hugo version | grep -q "+extended"; then
+                    echo "✓ Hugo Extended successfully installed: $(hugo version | head -n1)"
+                else
+                    echo "⚠ Hugo installed but Extended features may not be available"
+                fi
             else
-                echo "⚠ Hugo installed but Extended features may not be available"
+                echo "⚠ Could not find download URL for Hugo Extended"
             fi
         else
             echo "⚠ Unsupported architecture: $ARCH. Skipping Hugo Extended installation."
