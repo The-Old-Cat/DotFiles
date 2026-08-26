@@ -44,6 +44,45 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
         install_if_missing "$pkg"
     done
 
+ # --- Установка Hugo Extended ---
+    if ! command -v hugo >/dev/null 2>&1 || ! hugo version | grep -q "+extended"; then
+        echo "Installing Hugo Extended..."
+
+        # Проверяем архитектуру
+        ARCH=$(dpkg --print-architecture)
+        if [ "$ARCH" = "amd64" ]; then
+            # Скачиваем последнюю версию Hugo Extended
+            curl -fLo /tmp/hugo_extended.deb \
+                "https://github.com/gohugoio/hugo/releases/latest/download/hugo_extended_*_linux-${ARCH}.deb"
+
+            # Устанавливаем через dpkg
+            sudo dpkg -i /tmp/hugo_extended.deb 2>/dev/null || {
+                # Если не получилось из-за зависимостей - исправляем
+                echo "Fixing dependencies..."
+                sudo apt-get install -f -y
+                sudo dpkg -i /tmp/hugo_extended.deb
+            }
+
+            rm -f /tmp/hugo_extended.deb
+            echo "✓ Hugo Extended installed"
+
+            # Проверяем установку
+            if hugo version | grep -q "+extended"; then
+                echo "✓ Hugo Extended successfully installed"
+            else
+                echo "⚠ Hugo installed but Extended features may not be available"
+            fi
+        else
+            echo "⚠ Unsupported architecture: $ARCH. Skipping Hugo Extended installation."
+        fi
+    else
+        if command -v hugo >/dev/null 2>&1; then
+            echo "Hugo is already installed: $(hugo version | head -n1)"
+        else
+            echo "Hugo is already installed"
+        fi
+    fi
+
     # WSL-специфичные пакеты
     if is_wsl; then
         echo "Detected WSL environment..."
