@@ -133,12 +133,6 @@ symbol = " "                                                           # Ик
 style = "bg:color_blue"
 format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
-# C++
-[cpp]
-symbol = " "                                                           # Иконка C++
-style = "bg:color_blue"
-format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
-
 # Rust
 [rust]
 symbol = " "                                                           # Иконка Rust
