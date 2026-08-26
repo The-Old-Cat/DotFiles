@@ -21,6 +21,16 @@ foreach ($pkg in $corePackages) {
     scoop install $pkg 2>&1 | Out-Null
 }
 
+# --- Инструменты для творчества---
+Write-Host "Installing core tools via scoop..."
+$corePackages = @(
+    "inkscape"
+)
+foreach ($pkg in $corePackages) {
+    Write-Host "Installing $pkg..."
+    scoop install $pkg 2>&1 | Out-Null
+}
+
 # --- CLI улучшения ---
 Write-Host "Installing CLI improvements..."
 $cliPackages = @("jq", "yq", "zoxide", "dust", "procs", "bat", "starship", "lsd")
