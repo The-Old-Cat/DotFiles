@@ -1,54 +1,46 @@
 # .chezmoi.toml.tmpl
 # Конфигурация Chezmoi
 
-# --- Динамическое определение WSL ---
-{{- $is_wsl := false -}}
-{{- if eq .chezmoi.os "linux" -}}
-{{-   if hasKey .chezmoi "kernel" -}}
-{{-     if contains "microsoft" (lower .chezmoi.kernel.osrelease) -}}
-{{-       $is_wsl = true -}}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}
+{{ $is_wsl := false -}}
+{{ if eq .chezmoi.os "linux" -}}
+{{   if hasKey .chezmoi "kernel" -}}
+{{     if contains "microsoft" (lower .chezmoi.kernel.osrelease) -}}
+{{       $is_wsl = true -}}
+{{     end -}}
+{{   end -}}
+{{ end -}}
 
-# --- Динамическое определение Графической оболочки (GUI / Headless) ---
-{{- $has_gui := false -}}
-{{- if eq .chezmoi.os "windows" -}}
-{{-   $has_gui = true -}}
-{{- else if eq .chezmoi.os "linux" -}}
-{{-   if not $is_wsl -}}
-{{-     # Безопасная проверка переменных окружения
-{{-     if or (env "DISPLAY") (env "WAYLAND_DISPLAY") (env "XDG_CURRENT_DESKTOP") -}}
-{{-       $has_gui = true -}}
-{{-     end -}}
-{{-   end -}}
-{{- end -}}
+{{ $has_gui := false -}}
+{{ if eq .chezmoi.os "windows" -}}
+{{   $has_gui = true -}}
+{{ else if eq .chezmoi.os "linux" -}}
+{{   if not $is_wsl -}}
+{{     if or (env "DISPLAY") (env "WAYLAND_DISPLAY") (env "XDG_CURRENT_DESKTOP") -}}
+{{       $has_gui = true -}}
+{{     end -}}
+{{   end -}}
+{{ end -}}
 
-# --- Шифрование ---
 encryption = "age"
 
-# --- Редактор ---
 [edit]
     command = "code"
     args = ["--wait"]
 
-# --- Пользовательские данные ---
 [data]
     name = "The-Old-Cat"
     email = "artkov476@gmail.com"
     is_wsl = {{ $is_wsl }}
     has_gui = {{ $has_gui }}
 
-# --- Шифрование age ---
 [age]
     identity = "{{ .chezmoi.homeDir }}/.config/age/key.txt"
     recipients = [
         "age1838zmykps32gmczv2l0w9gw0z9evu06565atvqlqfatt6d6nw53qheknzh"
     ]
 
-# --- Настройки для Windows ---
-{{- if eq .chezmoi.os "windows" }}
+{{ if eq .chezmoi.os "windows" -}}
 [cd]
     command = "pwsh"
     args = ["-NoExit"]
-{{- end }}
+{{ end -}}
