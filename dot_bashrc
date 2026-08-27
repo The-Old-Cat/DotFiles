@@ -12,21 +12,36 @@ export HISTSIZE=50000
 export HISTFILESIZE=100000
 shopt -s histappend
 
-# === True Color Palette (для ANSI-вывода echo) ===
+# === True Color Palette ===
 C_RESET='\033[0m'
 C_CYAN='\033[38;2;139;233;253m'
 
 # === Функции ===
-get_local_ip() { hostname -I 2>/dev/null | awk '{print $1}' || echo "n/a"; }
+get_local_ip() {
+    hostname -I 2>/dev/null | awk '{print $1}' || ip route get 1 2>/dev/null | awk '{print $7}' || echo "n/a"
+}
 
 cached_external_ip() {
     local cache_file="$HOME/.cache/external_ip"
     mkdir -p "$HOME/.cache"
-    if [ -f "$cache_file" ] && [ $(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0))) -lt 300 ]; then
+
+    # Кроссплатформенная проверка: новее ли файл, чем 300 сек (5 мин)
+    local is_fresh=0
+    if [ -f "$cache_file" ]; then
+        if [ -n "$(find "$cache_file" -mmin -5 2>/dev/null)" ]; then
+            is_fresh=1
+        fi
+    fi
+
+    # Если кэш устарел, фоном отправляем асинхронный запрос, не блокируя вывод
+    if [ "$is_fresh" -eq 0 ]; then
+        (curl -s --connect-timeout 1 --max-time 2 https://ifconfig.me/ip > "$cache_file" 2>/dev/null &)
+    fi
+
+    if [ -s "$cache_file" ]; then
         cat "$cache_file"
     else
-        curl -s --max-time 2 http://ipecho.net/plain > "$cache_file" 2>/dev/null
-        cat "$cache_file"
+        echo "offline"
     fi
 }
 
@@ -39,35 +54,46 @@ print_banner() {
     echo -e ""
     echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
     echo -e "   💻 Приветствую тебя, ${user},"
-    echo -e "    на борту $(hostname)!"
+    echo -e "      на борту $(hostname)!"
     echo -e "   🌐 Внешний IP: ${ext_ip}"
     echo -e "   🏠 Локальный IP: ${loc_ip}"
     echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
     echo -e ""
 }
 
-# Запуск баннера только если это интерактивная сессия и не tmux
-if [[ $- == *i* ]] && [ -z "$TMUX" ]; then
+# Запуск баннера только в интерактивной сессии и не в tmux/zellij
+if [[ $- == *i* ]] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; then
     print_banner
 fi
 
 # === Инициализация Starship ===
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
-
 if command -v starship >/dev/null 2>&1; then
     eval "$(starship init bash)"
 fi
 
 # === Алиасы ===
-alias ll='ls -alFh --color=auto'
-alias la='ls -A --color=auto'
+# eza (замена ls)
+if command -v eza >/dev/null 2>&1; then
+    alias ls='eza --icons --group-directories-first'
+    alias ll='eza -l --icons --group-directories-first'
+    alias la='eza -la --icons --group-directories-first'
+    alias lt='eza --tree --level=2 --icons'
+else
+    alias ll='ls -alFh --color=auto'
+    alias la='ls -A --color=auto'
+fi
+
 alias grep='grep --color=auto'
 alias df='df -h'
 alias du='du -h --max-depth=1'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias myip='echo "Ext: $(cached_external_ip) | Loc: $(get_local_ip)"'
 
+# myip принудительно запрашивает свежий IP
+alias myip='curl -s --max-time 2 https://ifconfig.me/ip && echo ""'
+
+# === Переменные окружения ===
 export PATH="$HOME/.local/bin:$PATH"
 export TERM=xterm-256color
 export COLORTERM=truecolor

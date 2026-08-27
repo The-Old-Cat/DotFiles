@@ -2,34 +2,47 @@
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
-if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
-    # Репозиторий GitHub CLI
-    if ! command -v gh >/dev/null 2>&1; then
-        echo "Setting up GitHub CLI repository..."
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-            | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-        sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-            | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-    fi
+{{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
 
-    echo "Installing base packages..."
+# --- 1. Подключение сторонних репозиториев ---
+if ! command -v gh >/dev/null 2>&1; then
+    echo "Setting up GitHub CLI repository..."
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+
     sudo apt-get update
-
-    # Базовые пакеты
-    PKGS=(git curl wget htop jq mtr age restic gh unzip tmux fontconfig build-essential python3-pip ripgrep fzf fd-find golang-go lsd)
-
-    {{- if contains "proxmox" (lower .chezmoi.hostname) }}
-    PKGS+=(pve-manager-tools qemu-guest-agent)
-    {{- end }}
-
-    for pkg in "${PKGS[@]}"; do
-        if ! dpkg -l | grep -q "^ii  $pkg "; then
-            echo "Installing $pkg..."
-            sudo apt-get install -y --no-install-recommends "$pkg"
-        else
-            echo "$pkg is already installed"
-        fi
-    done
 fi
+
+# --- 2. Формирование списка пакетов ---
+PKGS=(
+    git curl wget htop jq mtr-tiny age restic gh
+    unzip tmux fontconfig build-essential python3-pip
+    ripgrep fzf fd-find golang-go eza
+)
+
+{{- if contains "proxmox" (lower .chezmoi.hostname) }}
+PKGS+=(pve-manager qemu-guest-agent)
+{{- end }}
+
+# --- 3. Фильтрация и пакетная установка ---
+MISSING_PKGS=()
+
+for pkg in "${PKGS[@]}"; do
+    if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"; then
+        MISSING_PKGS+=("$pkg")
+    fi
+done
+
+if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+    echo "Installing missing packages: ${MISSING_PKGS[*]}"
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends "${MISSING_PKGS[@]}"
+else
+    echo "✓ All APT packages are already installed."
+fi
+
+{{- end }}
 {{- end }}

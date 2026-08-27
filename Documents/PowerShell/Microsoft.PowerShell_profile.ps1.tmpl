@@ -39,16 +39,13 @@ Set-Alias -Name which -Value Get-Command  -ErrorAction SilentlyContinue
 Set-Alias -Name mtr   -Value winmtr       -ErrorAction SilentlyContinue
 
 
-# eza / lsd как ls (если установлены)
+# --- eza (вместо ls) ---
 if (Get-Command eza -ErrorAction SilentlyContinue) {
+    Remove-Item Alias:ls -ErrorAction SilentlyContinue
     function ls { eza --icons --group-directories-first @args }
     function ll { eza -l --icons --group-directories-first @args }
     function la { eza -la --icons --group-directories-first @args }
-}
-elseif (Get-Command lsd -ErrorAction SilentlyContinue) {
-    function ls { lsd --group-directories-first @args }
-    function ll { lsd -l --group-directories-first @args }
-    function la { lsd -la --group-directories-first @args }
+    function lt { eza --tree --level=2 --icons @args }
 }
 
 # --- Переменные окружения ---
