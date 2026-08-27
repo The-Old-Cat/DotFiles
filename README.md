@@ -13,7 +13,7 @@
   - [Windows](#windows)
 - [🔄 Ежедневное использование](#-ежедневное-использование)
 - [📝 Работа с файлами](#-работа-с-файлами)
-- [ Run-Once скрипты](#-run-once-скрипты)
+- [🔧 Run-Once скрипты](#-run-once-скрипты)
   - [Linux / WSL](#linux--wsl-1)
   - [Windows](#windows-1)
 - [📊 Шаблоны и данные](#-шаблоны-и-данные)
@@ -25,7 +25,7 @@
 
 ## 📦 Структура репозитория
 
-```
+```text
 dotfiles/
  ├── .git/                                            # Git-метаданные
  ├── .chezmoiignore                                   # Файлы, игнорируемые chezmoi
@@ -62,7 +62,7 @@ dotfiles/
 
 ---
 
-##  Быстрый старт
+## 🚀 Быстрый старт
 
 ### Linux / WSL
 
@@ -91,7 +91,7 @@ dotfiles/
    scoop install main/chezmoi git gh
    ```
 
-2. **Инициализируйте и примените конфигурацию (в Git Bash):**
+2. **Инициализируйте и примените конфигурацию (в Git Bash или Windows Terminal):**
    ```bash
    chezmoi init --apply The-Old-Cat
    ```
@@ -123,10 +123,10 @@ dotfiles/
 # Добавить один файл
 chezmoi add ~/.bashrc
 
-# Добавить файл и автоматически создать шаблон
+# Добавить файл и автоматически создать шаблон (подставив переменные)
 chezmoi add --autotemplate ~/.gitconfig
 
-# Добавить целую директорию
+# Добавить целую директорию рекурсивно
 chezmoi add ~/.config/starship/
 
 # Зафиксировать и отправить изменения
@@ -177,34 +177,17 @@ git push
 
 Устанавливает пакеты через Scoop:
 
-**Основные инструменты:**
-- `git`, `gh`, `pwsh`, `vscode`, `windows-terminal`, `wezterm`
-- `curl`, `wget`, `aria2`, `7zip`, `sudo`, `grep`
-
-**CLI-улучшения:**
-- `jq`, `yq`, `fd`, `ripgrep`, `fzf`, `zoxide`, `starship`
-- `dust`, `procs`, `bat`, `lsd`
-
-**Сеть и утилиты:**
-- `nmap`, `curlie`, `yt-dlp`, `ffmpeg`
-- `advanced-ip-scanner`
-
-**Разработка:**
-- `nodejs-lts`, `go`, `uv`
-
-**Безопасность и продуктивность:**
-- `bitwarden-cli`, `obsidian`, `flow-launcher`, `restic`
-
-**Sysinternals:**
-- `process-explorer`, `autoruns`, `tcpview`, `handle`, `du`
-- `procmon`, `psservice`, `rammap`, `sysmon`
-
-**Шрифты Nerd Fonts:**
-- `Cascadia-Code`, `JetBrainsMono-NF`, `JetBrainsMono-NF-Mono`
+- **Основные инструменты:** `git`, `gh`, `pwsh`, `vscode`, `windows-terminal`, `wezterm`, `curl`, `wget`, `aria2`, `7zip`, `sudo`, `grep`
+- **CLI-улучшения:** `jq`, `yq`, `fd`, `ripgrep`, `fzf`, `zoxide`, `starship`, `dust`, `procs`, `bat`, `lsd`
+- **Сеть и утилиты:** `nmap`, `curlie`, `yt-dlp`, `ffmpeg`, `advanced-ip-scanner`
+- **Разработка:** `nodejs-lts`, `go`, `uv`
+- **Безопасность и продуктивность:** `bitwarden-cli`, `obsidian`, `flow-launcher`, `restic`
+- **Sysinternals:** `process-explorer`, `autoruns`, `tcpview`, `handle`, `du`, `procmon`, `psservice`, `rammap`, `sysmon`
+- **Шрифты Nerd Fonts:** `Cascadia-Code`, `JetBrainsMono-NF`, `JetBrainsMono-NF-Mono`
 
 **Автоматическая настройка:**
 - Регистрация VS Code в системе (контекстное меню, ассоциации файлов)
-- Создание `Microsoft.PowerShell_profile.ps1`
+- Создание базового `Microsoft.PowerShell_profile.ps1`
 
 ---
 
@@ -264,7 +247,7 @@ chezmoi data
 
 ---
 
-## ️ Технологии
+## 🛠️ Технологии
 
 - **[Chezmoi](https://www.chezmoi.io/)** — менеджер dotfiles
 - **[Git](https://git-scm.com/)** — система контроля версий
@@ -289,22 +272,13 @@ chezmoi data
 
 ### ⚠️ Важные предупреждения
 
-**Личные данные:**
-- Файлы `dot_gitconfig.tmpl` и `.chezmoi.toml.tmpl` содержат шаблоны с моими именем и email
-- Обязательно замените их на свои
-
-**Специфичные настройки:**
-- Некоторые скрипты содержат условную логику для моих конкретных хостов
-- Список устанавливаемых пакетов подобран под мои нужды
-
-**Запуск скриптов:**
-- Будьте осторожны с `run_once_*` скриптами — они устанавливают пакеты и изменяют систему
-- Всегда проверяйте их содержимое: `chezmoi cat <file>` или `chezmoi execute-template < <file>`
-- На Windows используйте `chezmoi apply --exclude=scripts` для безопасности
+- **Личные данные:** Файлы `dot_gitconfig.tmpl` и `.chezmoi.toml.tmpl` содержат шаблоны с моими именем и email. Обязательно замените их на свои.
+- **Специфичные настройки:** Некоторые скрипты содержат условную логику для моих конкретных хостов. Список устанавливаемых пакетов подобран под мои нужды.
+- **Запуск скриптов:** Будьте осторожны с `run_once_*` скриптами — они устанавливают пакеты и изменяют систему. Всегда проверяйте их содержимое: `chezmoi cat <file>` или `chezmoi execute-template < <file>`. На Windows используйте `chezmoi apply --exclude=scripts` для безопасности.
 
 ### 🚀 Как использовать (адаптация под себя)
 
-1. **Форкните репозиторий** на GitHub
+1. **Форкните репозиторий** на GitHub.
 2. **Клонируйте свой форк:**
    ```bash
    git clone https://github.com/<ваш-username>/dotfiles.git
@@ -313,23 +287,25 @@ chezmoi data
    - `.chezmoi.toml.tmpl`
    - `dot_gitconfig.tmpl`
    - Других шаблонах с `{{ .name }}` и `{{ .email }}`
-4. **Отредактируйте скрипты** под свои нужды
+4. **Отредактируйте скрипты** под свои нужды (удалите лишние хосты и пакеты).
 5. **Примените настройки:**
    ```bash
    chezmoi init --apply <ваш-username>
    ```
 
-###  Рекомендации
+### 💡 Рекомендации
 
 - Всегда проверяйте изменения: `chezmoi diff`
 - Используйте `chezmoi apply --dry-run --verbose` перед применением
-- На Windows: `chezmoi apply --exclude=scripts`
-- Не клонируйте репозиторий вручную — используйте source-директорию Chezmoi (`~/.local/share/chezmoi`)
+- На Windows для безопасности: `chezmoi apply --exclude=scripts`
+- Не клонируйте репозиторий вручную в `~/dotfiles` — используйте только source-директорию Chezmoi (`~/.local/share/chezmoi`)
 
 ---
 
 ## 📚 Дополнительная информация
 
 - Официальная документация: [chezmoi.io](https://www.chezmoi.io/)
-- Лицензия: MIT (используйте как основу для своих настроек)
-```
+- Лицензия: [MIT](https://opensource.org/licenses/MIT) (используйте как основу для своих настроек)
+ включая PowerShell-профиль.
+
+Можете смело коммитить этот файл в `main` ветку вашего репозитория! Если нужно что-то ещё подправить — дайте знать.
