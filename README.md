@@ -27,26 +27,37 @@
 
 ```
 dotfiles/
- ├── Documents/PowerShell/
- │   ── Microsoft.PowerShell_profile.ps1.tmpl  # Профиль PowerShell
- ├── private_dot_config/
- │   └── starship/
- │       └── starship.toml             # Конфиг Starship
- ├── .chezmoi.toml.tmpl                # Шаблон конфигурации chezmoi
- ├── .chezmoiignore                    # Файлы и папки, игнорируемые chezmoi
- ├── README.md
- ├── dot_bash_logout                   # ~/.bash_logout
- ├── dot_bashrc                        # ~/.bashrc
- ├── dot_gitconfig.tmpl                # ~/.gitconfig (с шаблонами)
- ├── dot_profile                       # ~/.profile
- ├── run_once_after_10-base-packages.sh.tmpl      # 10: Базовые пакеты
- ├── run_once_after_15-windows-packages.ps1.tmpl  # 15: Windows-пакеты (Scoop)
- ├── run_once_after_20-helix.sh.tmpl              # 20: Редактор Helix
- ├── run_once_after_30-hugo.sh.tmpl               # 30: Генератор сайтов Hugo
- ├── run_once_after_40-uv.sh.tmpl                 # 40: Python-менеджер uv
- ├── run_once_after_50-wsl.sh.tmpl                # 50: WSL-специфичные настройки
- ├── run_once_after_60-wezterm.sh.tmpl            # 60: Терминал WezTerm
- └── run_once_after_70-fonts.sh.tmpl              # 70: Шрифты
+ ├── .git/                                            # Git-метаданные
+ ├── .chezmoiignore                                   # Файлы, игнорируемые chezmoi
+ ├── .chezmoi.toml.tmpl                               # Шаблон конфига chezmoi
+ ├── Documents/
+ │   └── PowerShell/
+ │       └── Microsoft.PowerShell_profile.ps1.tmpl    # → профиль PowerShell
+ ├── dot_bash_logout                                  # → ~/.bash_logout
+ ├── dot_bashrc                                       # → ~/.bashrc
+ ├── dot_profile                                      # → ~/.profile
+ ├── dot_gitconfig.tmpl                               # → ~/.gitconfig (шаблон)
+ ├── private_dot_config/                              # → ~/.config/ (права 0600/0700)
+ │   ├── chezmoi/
+ │   │   └── chezmoi.toml                             # Конфиг chezmoi
+ │   ├── helix/
+ │   │   ├── config.toml                              # Конфиг редактора Helix
+ │   │   └── themes/
+ │   │       └── gruvbox.toml
+ │   ├── starship/
+ │   │   └── starship.toml                            # Конфиг Starship
+ │   ├── tmux/
+ │   │   └── tmux.conf                                # Конфиг tmux
+ │   └── wezterm/
+ │       └── wezterm.lua                              # Конфиг WezTerm
+ ├── run_once_after_10-base-packages.sh.tmpl          # 10: Базовые пакеты (apt)
+ ├── run_once_after_15-windows-packages.ps1.tmpl      # 15: Пакеты Windows (Scoop)
+ ├── run_once_after_20-helix.sh.tmpl                  # 20: Редактор Helix
+ ├── run_once_after_30-hugo.sh.tmpl                   # 30: Генератор Hugo
+ ├── run_once_after_40-uv.sh.tmpl                     # 40: Python-менеджер uv
+ ├── run_once_after_50-wsl.sh.tmpl                    # 50: WSL-специфика (Docker)
+ ├── run_once_after_60-wezterm.sh.tmpl                # 60: Терминал WezTerm
+ └── run_once_after_70-fonts.sh.tmpl                  # 70: Nerd Fonts
 ```
 
 ---
