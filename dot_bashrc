@@ -19,7 +19,7 @@ C_CYAN='\033[38;2;139;233;253m'
 # === Настройки Git Bash (Windows) ===
 {{- if eq .chezmoi.os "windows" }}
 export LANG=ru_RU.UTF-8
-export LC_ALL=ru_RU.UTF-8
+export LC_CTYPE=ru_RU.UTF-8
 {{- end }}
 
 # === Функции ===
