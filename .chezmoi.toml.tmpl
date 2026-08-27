@@ -4,7 +4,7 @@
 {{ $is_wsl := false -}}
 {{ if eq .chezmoi.os "linux" -}}
 {{   if hasKey .chezmoi "kernel" -}}
-{{     if contains "microsoft" (lower .chezmoi.kernel.osrelease) -}}
+{{     if or (contains "microsoft" (lower .chezmoi.kernel.osrelease)) (contains "wsl" (lower .chezmoi.kernel.osrelease)) -}}
 {{       $is_wsl = true -}}
 {{     end -}}
 {{   end -}}
@@ -24,8 +24,12 @@
 encryption = "age"
 
 [edit]
+{{ if $has_gui -}}
     command = "code"
     args = ["--wait"]
+{{ else -}}
+    command = "micro"
+{{ end -}}
 
 [data]
     name = "The-Old-Cat"

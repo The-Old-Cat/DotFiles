@@ -20,7 +20,7 @@ fi
 PKGS=(
     git curl wget htop jq mtr-tiny age restic gh
     unzip tmux fontconfig build-essential python3-pip
-    ripgrep fzf fd-find golang-go eza
+    ripgrep fzf fd-find golang-go eza micro
 )
 
 {{- if contains "proxmox" (lower .chezmoi.hostname) }}

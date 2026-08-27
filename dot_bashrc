@@ -6,6 +6,11 @@ case $- in
       *) return;;
 esac
 
+# === Автопереход в HOME при старте WSL из директорий Windows ===
+if [[ "$PWD" == "/mnt/c/Users/"* ]]; then
+    cd ~
+fi
+
 # === История ===
 export HISTCONTROL=ignoreboth:erasedups
 export HISTSIZE=50000
@@ -73,28 +78,54 @@ elif command -v starship.exe >/dev/null 2>&1; then
 fi
 
 # === Алиасы ===
-# eza (замена ls с поддержкой .exe для Windows)
+# === Навигация и списки (eza вместо ls) ===
 if command -v eza >/dev/null 2>&1 || command -v eza.exe >/dev/null 2>&1; then
     alias ls='eza --icons --group-directories-first'
     alias ll='eza -l --icons --group-directories-first'
     alias la='eza -la --icons --group-directories-first'
     alias lt='eza --tree --level=2 --icons'
 else
+    alias ls='ls --color=auto'
     alias ll='ls -alFh --color=auto'
     alias la='ls -A --color=auto'
 fi
 
-# Утилиты
-if command -v winmtr.exe >/dev/null 2>&1; then
+# Переход по директориям
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# === Защита и безопасность ===
+alias cp='cp -i'
+alias mv='mv -i'
+alias rm='rm -i'
+
+# === Системный мониторинг ===
+alias df='df -h'
+alias du='du -h --max-depth=1'
+alias free='free -h'
+alias grep='grep --color=auto'
+
+# === Сеть и диагностика ===
+# Фолбэк для mtr: mtr-tiny (Linux) -> mtr (Linux) -> winmtr.exe (Git Bash / Windows)
+if command -v mtr-tiny >/dev/null 2>&1; then
+    alias mtr='mtr-tiny'
+elif command -v winmtr.exe >/dev/null 2>&1; then
     alias mtr='winmtr.exe'
 fi
 
-alias grep='grep --color=auto'
-alias df='df -h'
-alias du='du -h --max-depth=1'
-alias ..='cd ..'
-alias ...='cd ../..'
 alias myip='curl -s --max-time 2 https://ifconfig.me/ip && echo ""'
+alias ports='ss -tulpn 2>/dev/null || netstat -tulanp'
+
+# === Chezmoi & Git ===
+alias cz='chezmoi'
+alias cza='chezmoi apply'
+alias cze='chezmoi edit'
+alias czs='chezmoi status'
+
+alias g='git'
+alias gs='git status'
+alias gl='git log --oneline --graph --decorate'
 
 # === Переменные окружения ===
 export PATH="$HOME/.local/bin:$PATH"
