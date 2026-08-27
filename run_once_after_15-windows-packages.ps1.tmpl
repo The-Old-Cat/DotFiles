@@ -3,7 +3,6 @@
 
 $ErrorActionPreference = "Stop"
 
-# Проверяем, установлен ли scoop
 if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
     Write-Warning "scoop is not installed. Please install it first: iwr -useb get.scoop.sh | iex"
     return
@@ -12,12 +11,12 @@ if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
 # --- 1. Подключение бакетов ---
 Write-Host "Ensuring required Scoop buckets are added..."
 $buckets = (scoop bucket list 2>$null).Name
-
 $requiredBuckets = @("extras", "nerd-fonts")
+
 foreach ($bucket in $requiredBuckets) {
     if ($buckets -notcontains $bucket) {
         Write-Host "Adding bucket: $bucket"
-        scoop bucket add $bucket | Out-Null
+        scoop bucket add $bucket
     }
 }
 
@@ -34,7 +33,7 @@ $packages = @(
     "jq", "yq", "zoxide", "dust", "procs", "bat", "starship", "lsd",
 
     # Network & Utilities
-    "nmap", "curlie", "wget", "yt-dlp", "ffmpeg",
+    "nmap", "curlie", "wget", "yt-dlp", "ffmpeg", "winmtr",
 
     # Security & Productivity
     "bitwarden-cli", "obsidian", "flow-launcher",
@@ -51,11 +50,8 @@ $packages = @(
     "Cascadia-Code", "JetBrainsMono-NF", "JetBrainsMono-NF-Mono"
 )
 
-# Пакетный запуск установки
-foreach ($pkg in $packages) {
-    Write-Host "Checking / Installing $pkg..."
-    scoop install $pkg 2>&1 | Out-Null
-}
+# Пакетная установка одной командой (флаг --skip пропускает уже установленные)
+scoop install @packages --skip
 
 # --- 3. Автоматическая настройка VS Code ---
 if (Get-Command code -ErrorAction SilentlyContinue) {
@@ -66,7 +62,7 @@ if (Get-Command code -ErrorAction SilentlyContinue) {
         "eamodio.gitlens"
     )
     foreach ($ext in $extensions) {
-        code --install-extension $ext --force 2>&1 | Out-Null
+        code --install-extension $ext --force
     }
 } else {
     Write-Warning "VS Code (code) command not found in current PATH. Skipping extensions installation."

@@ -31,11 +31,13 @@ if (Get-Module -ListAvailable PSReadLine) {
 }
 
 # --- Полезные алиасы ---
-Set-Alias -Name g   -Value git          -ErrorAction SilentlyContinue
-Set-Alias -Name lg  -Value lazygit      -ErrorAction SilentlyContinue
-Set-Alias -Name cat -Value bat          -ErrorAction SilentlyContinue
-Set-Alias -Name grep -Value rg          -ErrorAction SilentlyContinue
+Set-Alias -Name g     -Value git          -ErrorAction SilentlyContinue
+Set-Alias -Name lg    -Value lazygit      -ErrorAction SilentlyContinue
+Set-Alias -Name cat   -Value bat          -ErrorAction SilentlyContinue
+Set-Alias -Name grep  -Value rg           -ErrorAction SilentlyContinue
 Set-Alias -Name which -Value Get-Command -ErrorAction SilentlyContinue
+
+
 
 # eza / lsd как ls (если установлены)
 if (Get-Command eza -ErrorAction SilentlyContinue) {

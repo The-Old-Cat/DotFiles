@@ -17,7 +17,7 @@ if grep -qEi "(ubuntu|debian)" /etc/os-release 2>/dev/null; then
     sudo apt-get update
 
     # Базовые пакеты
-    PKGS=(git curl wget htop jq age restic gh unzip tmux fontconfig build-essential python3-pip ripgrep fzf fd-find golang-go lsd)
+    PKGS=(git curl wget htop jq mtr age restic gh unzip tmux fontconfig build-essential python3-pip ripgrep fzf fd-find golang-go lsd)
 
     {{- if contains "proxmox" (lower .chezmoi.hostname) }}
     PKGS+=(pve-manager-tools qemu-guest-agent)
