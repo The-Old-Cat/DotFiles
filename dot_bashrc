@@ -16,12 +16,6 @@ shopt -s histappend
 C_RESET='\033[0m'
 C_CYAN='\033[38;2;139;233;253m'
 
-# === Настройки Git Bash (Windows) ===
-{{- if eq .chezmoi.os "windows" }}
-export LANG=ru_RU.UTF-8
-export LC_CTYPE=ru_RU.UTF-8
-{{- end }}
-
 # === Функции ===
 get_local_ip() {
     hostname -I 2>/dev/null | awk '{print $1}' || ip route get 1 2>/dev/null | awk '{print $7}' || echo "n/a"
