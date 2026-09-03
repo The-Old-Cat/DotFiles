@@ -4,23 +4,31 @@ set -euo pipefail
 {{- if .has_gui }}
 if ! command -v wezterm >/dev/null 2>&1; then
     echo "Installing WezTerm..."
-    {{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
+
+    {{- $osId := .chezmoi.osRelease.id | default "" -}}
+    {{- $osLike := .chezmoi.osRelease.idLike | default "" -}}
+
+    {{- if or (eq $osId "ubuntu") (eq $osId "debian") (contains "debian" $osLike) }}
     curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg
     echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list > /dev/null
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends wezterm
-    {{- else if or (eq .chezmoi.osRelease.id "arch") (eq .chezmoi.osRelease.idLike "arch") }}
+
+    {{- else if or (eq $osId "arch") (contains "arch" $osLike) }}
     sudo pacman -S --needed --noconfirm wezterm
-    {{- else if or (eq .chezmoi.osRelease.id "altlinux") (eq .chezmoi.osRelease.idLike "altlinux") }}
+
+    {{- else if or (eq $osId "altlinux") (contains "altlinux" $osLike) }}
     sudo apt-get update && sudo apt-get install -y wezterm
+
     {{- else }}
-    echo "⚠ Package installation for {{ .chezmoi.osRelease.id }} is not supported directly."
+    echo "⚠ Package installation for OS '{{ $osId }}' is not supported directly."
     exit 0
     {{- end }}
+
     echo "✓ WezTerm installed"
 else
     echo "WezTerm is already installed"
 fi
 {{- else }}
-echo "Skipping WezTerm (Headless environment or WSL)"
+echo "Skipping WezTerm (Headless environment, SSH session, or WSL)"
 {{- end }}
