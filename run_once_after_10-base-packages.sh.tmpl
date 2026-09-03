@@ -2,47 +2,88 @@
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
-{{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
 
-# --- 1. Подключение сторонних репозиториев ---
+# === 1. Автоопределение пакетного менеджера и команд ===
+{{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
+PKG_MANAGER="apt"
+UPDATE_CMD="sudo apt-get update"
+INSTALL_CMD="sudo apt-get install -y --no-install-recommends"
+CHECK_CMD="dpkg-query -W -f='${Status}'"
+CHECK_SUBSTRING="ok installed"
+
+{{- else if or (eq .chezmoi.osRelease.id "arch") (eq .chezmoi.osRelease.idLike "arch") }}
+PKG_MANAGER="pacman"
+UPDATE_CMD="sudo pacman -Sy"
+INSTALL_CMD="sudo pacman -S --needed --noconfirm"
+CHECK_CMD="pacman -Qi"
+CHECK_SUBSTRING="Name"
+
+{{- else if or (eq .chezmoi.osRelease.id "altlinux") (eq .chezmoi.osRelease.idLike "altlinux") }}
+PKG_MANAGER="apt-get (ALT)"
+UPDATE_CMD="sudo apt-get update"
+INSTALL_CMD="sudo apt-get install -y"
+CHECK_CMD="rpm -q"
+CHECK_SUBSTRING="" # RPM возвращает 0 если пакет установлен, дополнительный grep не требуется
+{{- else }}
+echo "Неподдерживаемый дистрибутив: {{ .chezmoi.osRelease.id }}"
+exit 0
+{{- end }}
+
+# === 2. Базовый список пакетов ===
+PKGS=(
+    git curl wget htop jq mtr-tiny age restic gh
+    unzip tmux fontconfig python3 ripgrep fzf fd
+    eza micro
+)
+
+# Корректировка имён пакетов под специфику дистрибутива
+{{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
+PKGS+=(build-essential python3-pip golang-go fd-find)
+{{- else if or (eq .chezmoi.osRelease.id "arch") (eq .chezmoi.osRelease.idLike "arch") }}
+PKGS+=(base-devel python-pip go)
+{{- else if or (eq .chezmoi.osRelease.id "altlinux") (eq .chezmoi.osRelease.idLike "altlinux") }}
+PKGS+=(glibc-devel python3-module-pip golang)
+{{- end }}
+
+{{- if contains "proxmox" (lower .chezmoi.hostname) }}
+PKGS+=(pve-manager qemu-guest-agent)
+{{- end }}
+
+# === 3. Подключение сторонних репозиториев (если требуется) ===
 if ! command -v gh >/dev/null 2>&1; then
-    echo "Setting up GitHub CLI repository..."
+{{- if or (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.idLike "debian") }}
+    echo "Настройка репозитория GitHub CLI для Debian/Ubuntu..."
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
         | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
     sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
         | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 
-    sudo apt-get update
+    $UPDATE_CMD
+{{- end }}
 fi
 
-# --- 2. Формирование списка пакетов ---
-PKGS=(
-    git curl wget htop jq mtr-tiny age restic gh
-    unzip tmux fontconfig build-essential python3-pip
-    ripgrep fzf fd-find golang-go eza micro
-)
-
-{{- if contains "proxmox" (lower .chezmoi.hostname) }}
-PKGS+=(pve-manager qemu-guest-agent)
-{{- end }}
-
-# --- 3. Фильтрация и пакетная установка ---
+# === 4. Фильтрация и пакетная установка ===
 MISSING_PKGS=()
 
 for pkg in "${PKGS[@]}"; do
-    if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"; then
-        MISSING_PKGS+=("$pkg")
+    if [ -n "$CHECK_SUBSTRING" ]; then
+        if ! eval "$CHECK_CMD \"$pkg\"" 2>/dev/null | grep -q "$CHECK_SUBSTRING"; then
+            MISSING_PKGS+=("$pkg")
+        fi
+    else
+        if ! eval "$CHECK_CMD \"$pkg\"" &>/dev/null; then
+            MISSING_PKGS+=("$pkg")
+        fi
     fi
 done
 
 if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
-    echo "Installing missing packages: ${MISSING_PKGS[*]}"
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends "${MISSING_PKGS[@]}"
+    echo "Установка недостающих пакетов через ${PKG_MANAGER}: ${MISSING_PKGS[*]}"
+    $UPDATE_CMD
+    $INSTALL_CMD "${MISSING_PKGS[@]}"
 else
-    echo "✓ All APT packages are already installed."
+    echo "✓ Все пакеты (${PKG_MANAGER}) уже установлены."
 fi
 
-{{- end }}
 {{- end }}
