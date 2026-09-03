@@ -1,5 +1,5 @@
 # ~/.bashrc - Universal Chezmoi Config
-
+# dot_bashrc
 # === Защита от неинтерактивных сессий ===
 case $- in
     *i*) ;;

@@ -66,8 +66,9 @@ dotfiles/
 
 ### Linux / WSL
 
-1. **Установите Chezmoi:**
+1. **Установите Chezmoi, Git, gh :**
    ```bash
+   sudo apt install git gh
    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
    ```
 
@@ -76,8 +77,11 @@ dotfiles/
    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
    source ~/.bashrc
    ```
-
-3. **Инициализируйте и примените конфигурацию:**
+3. **Аутентификация в GitHub:**
+   ```bash
+   gh auth login
+   ```
+4. **Инициализируйте и примените конфигурацию:**
    ```bash
    chezmoi init --apply The-Old-Cat
    ```
@@ -90,15 +94,15 @@ dotfiles/
    iwr -useb get.scoop.sh | iex
    scoop install main/chezmoi git gh
    ```
+2. **Аутентификация в GitHub:**
+   ```bash
+   gh auth login
 
-2. **Инициализируйте и примените конфигурацию (в Git Bash или Windows Terminal):**
+3. **Инициализируйте и примените конфигурацию (в Git Bash):**
    ```bash
    chezmoi init --apply The-Old-Cat
    ```
 
-3. **Аутентификация в GitHub:**
-   ```bash
-   gh auth login
    ```
 
 ---
