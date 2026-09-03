@@ -103,8 +103,6 @@ dotfiles/
    chezmoi init --apply The-Old-Cat
    ```
 
-   ```
-
 ---
 
 ## 🔄 Ежедневное использование
