@@ -2,33 +2,40 @@
 set -euo pipefail
 
 {{- if eq .chezmoi.os "linux" }}
-if ! command -v hugo >/dev/null 2>&1 || ! hugo version | grep -q "+extended"; then
+if ! command -v hugo >/dev/null 2>&1; then
     echo "Installing Hugo Extended..."
+
+    # Определение архитектуры
     ARCH=$(uname -m)
-    case "$ARCH" in
-        x86_64) HUGO_ARCH="64bit" ;;
+    case "${ARCH}" in
+        x86_64)  HUGO_ARCH="64bit" ;;
         aarch64) HUGO_ARCH="ARM64" ;;
-        *) echo "⚠ Unsupported architecture: $ARCH"; exit 0 ;;
+        *)       echo "Unsupported architecture: ${ARCH}"; exit 1 ;;
     esac
 
-    LATEST_URL=$(curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
-        | grep -oE "https://.*hugo_extended_.*_linux-${HUGO_ARCH}\.tar\.gz" | head -n1)
+    # Получение URL последней версии Hugo Extended (tar.gz)
+    TAR_URL=$(curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
+        | grep "browser_download_url" \
+        | grep -i "hugo_extended" \
+        | grep -i "Linux-${HUGO_ARCH}.tar.gz" \
+        | cut -d '"' -f 4 \
+        | head -n 1)
 
-    if [ -n "$LATEST_URL" ]; then
-        echo "Downloading from: $LATEST_URL"
-        curl -fLo /tmp/hugo.tar.gz "$LATEST_URL"
-        sudo tar -xzf /tmp/hugo.tar.gz -C /usr/local/bin hugo
-        rm -f /tmp/hugo.tar.gz
-
-        if hugo version | grep -q "+extended"; then
-            echo "✓ Hugo Extended successfully installed: $(hugo version | head -n1)"
-        else
-            echo "⚠ Hugo installed but Extended features may not be available"
-        fi
-    else
-        echo "⚠ Could not find download URL for Hugo Extended"
+    if [ -z "${TAR_URL}" ]; then
+        echo "Error: Failed to fetch Hugo download URL"
+        exit 1
     fi
+
+    # Скачивание и установка
+    TMP_DIR=$(mktemp -d)
+    curl -sLS "${TAR_URL}" -o "${TMP_DIR}/hugo.tar.gz"
+    tar -xzf "${TMP_DIR}/hugo.tar.gz" -C "${TMP_DIR}"
+
+    sudo install -m 0755 "${TMP_DIR}/hugo" /usr/local/bin/hugo
+    rm -rf "${TMP_DIR}"
+
+    echo "✓ Hugo Extended successfully installed: $(hugo version)"
 else
-    echo "Hugo Extended is already installed: $(hugo version | head -n1)"
+    echo "Hugo is already installed: $(hugo version)"
 fi
 {{- end }}
