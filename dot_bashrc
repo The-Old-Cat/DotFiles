@@ -1,17 +1,23 @@
 # ~/.bashrc - Universal Chezmoi Config
 # dot_bashrc
+
 # === Защита от неинтерактивных сессий ===
 case $- in
     *i*) ;;
       *) return;;
 esac
 
+# === Переменные окружения и PATH (в начале для корректного command -v) ===
+export PATH="$HOME/.local/bin:$PATH"
+export TERM=xterm-256color
+export COLORTERM=truecolor
+
 # === Автопереход в HOME при старте WSL из директорий Windows ===
 if [[ "$PWD" == "/mnt/c/Users/"* ]]; then
     cd ~
 fi
 
-# === История ===
+# === Настройки истории ===
 export HISTCONTROL=ignoreboth:erasedups
 export HISTSIZE=50000
 export HISTFILESIZE=100000
@@ -65,7 +71,7 @@ print_banner() {
 }
 
 # Запуск баннера только в интерактивной сессии и не в tmux/zellij
-if [[ $- == *i* ]] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; then
+if [ -z "${TMUX:-}" ] && [ -z "${ZELLIJ:-}" ]; then
     print_banner
 fi
 
@@ -77,8 +83,27 @@ elif command -v starship.exe >/dev/null 2>&1; then
     eval "$(starship.exe init bash)"
 fi
 
+# === Инициализация Zoxide и FZF (при наличии) ===
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init bash)"
+fi
+
+if command -v fzf >/dev/null 2>&1; then
+    [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+fi
+
+# === Текстовый редактор по умолчанию ===
+if command -v micro >/dev/null 2>&1 || command -v micro.exe >/dev/null 2>&1; then
+    export EDITOR=micro
+    export VISUAL=micro
+elif command -v hx >/dev/null 2>&1; then
+    export EDITOR=hx
+    export VISUAL=hx
+fi
+
 # === Алиасы ===
-# === Навигация и списки (eza вместо ls) ===
+
+# Навигация и списки (eza / ls)
 if command -v eza >/dev/null 2>&1 || command -v eza.exe >/dev/null 2>&1; then
     alias ls='eza --icons --group-directories-first'
     alias ll='eza -l --icons --group-directories-first'
@@ -90,24 +115,28 @@ else
     alias la='ls -A --color=auto'
 fi
 
+# Фолбэк для fd в Debian/Ubuntu
+if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    alias fd='fdfind'
+fi
+
 # Переход по директориям
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-# === Защита и безопасность ===
+# Защита и безопасность
 alias cp='cp -i'
 alias mv='mv -i'
 alias rm='rm -i'
 
-# === Системный мониторинг ===
+# Системный мониторинг
 alias df='df -h'
 alias du='du -h --max-depth=1'
 alias free='free -h'
 alias grep='grep --color=auto'
 
-# === Сеть и диагностика ===
-# Фолбэк для mtr: mtr-tiny (Linux) -> mtr (Linux) -> winmtr.exe (Git Bash / Windows)
+# Сеть и диагностика
 if command -v mtr-tiny >/dev/null 2>&1; then
     alias mtr='mtr-tiny'
 elif command -v winmtr.exe >/dev/null 2>&1; then
@@ -117,7 +146,7 @@ fi
 alias myip='curl -s --max-time 2 https://ifconfig.me/ip && echo ""'
 alias ports='ss -tulpn 2>/dev/null || netstat -tulanp'
 
-# === Chezmoi & Git ===
+# Chezmoi & Git
 alias cz='chezmoi'
 alias cza='chezmoi apply'
 alias cze='chezmoi edit'
@@ -126,17 +155,3 @@ alias czs='chezmoi status'
 alias g='git'
 alias gs='git status'
 alias gl='git log --oneline --graph --decorate'
-
-# === Переменные окружения ===
-export PATH="$HOME/.local/bin:$PATH"
-export TERM=xterm-256color
-export COLORTERM=truecolor
-
-# Текстовый редактор по умолчанию
-if command -v micro >/dev/null 2>&1 || command -v micro.exe >/dev/null 2>&1; then
-    export EDITOR=micro
-    export VISUAL=micro
-else
-    export EDITOR=hx
-    export VISUAL=hx
-fi
