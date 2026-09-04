@@ -11,7 +11,7 @@ if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
 # --- 1. Подключение бакетов ---
 Write-Host "Ensuring required Scoop buckets are added..."
 $buckets = (scoop bucket list 2>$null).Name
-$requiredBuckets = @("extras", "nerd-fonts")
+$requiredBuckets = @("extras", "nerd-fonts", "nonportable")
 
 foreach ($bucket in $requiredBuckets) {
     if ($buckets -notcontains $bucket) {
@@ -25,7 +25,7 @@ Write-Host "Installing packages via Scoop..."
 
 $packages = @(
     # Core & Tools
-    "git", "gh", "fd", "ripgrep", "fzf", "restic",
+    "git", "gh", "fd", "ripgrep", "fzf", "restic", "sumatrapdf",
     "windows-terminal", "wezterm", "uv", "pwsh", "vscode",
     "curl", "sudo", "grep", "aria2", "7zip", "inkscape",
 
