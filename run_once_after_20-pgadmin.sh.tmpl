@@ -1,0 +1,83 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Проверяем, установлен ли уже pgAdmin 4
+if command -v pgadmin4 &> /dev/null || dpkg -s pgadmin4-web &> /dev/null || rpm -q pgadmin4-web &> /dev/null || rpm -q pgadmin4 &> /dev/null; then
+    echo "=== pgAdmin 4 уже установлен, пропуск. ==="
+    exit 0
+fi
+
+echo "=== Установка pgAdmin 4 ==="
+
+{{ if eq .chezmoi.osRelease.id "altlinux" -}}
+# ------------------------------------------------------------------------------
+# ALT Linux (p10 / p11 / Sisyphus)
+# ------------------------------------------------------------------------------
+sudo apt-get update
+sudo apt-get install -y pgadmin4
+
+{{ else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") (eq .chezmoi.osRelease.id "mint") (eq .chezmoi.osRelease.id "astra") (and (hasKey .chezmoi.osRelease "idLike") (contains "debian" .chezmoi.osRelease.idLike)) -}}
+# ------------------------------------------------------------------------------
+# DEB-базированные системы (Debian, Ubuntu, Astra Linux и др.)
+# ------------------------------------------------------------------------------
+sudo apt-get update -qq
+sudo apt-get install -y gnupg curl apt-transport-https ca-certificates lsb-release
+
+curl -fsSL https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/pgadmin-keyring.gpg --yes
+
+CODENAME="$(lsb_release -cs)"
+echo "deb [signed-by=/usr/share/keyrings/pgadmin-keyring.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/${CODENAME} pgadmin4 main" | sudo tee /etc/apt/sources.list.d/pgadmin4.list > /dev/null
+
+sudo apt-get update -qq
+sudo apt-get install -y pgadmin4-web
+
+{{ else if or (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.id "rhel") (eq .chezmoi.osRelease.id "centos") (eq .chezmoi.osRelease.id "rocky") (eq .chezmoi.osRelease.id "almalinux") (and (hasKey .chezmoi.osRelease "idLike") (or (contains "rhel" .chezmoi.osRelease.idLike) (contains "fedora" .chezmoi.osRelease.idLike))) -}}
+# ------------------------------------------------------------------------------
+# RPM-базированные системы (Fedora, RHEL, CentOS, Rocky Linux, AlmaLinux)
+# ------------------------------------------------------------------------------
+PKG_MGR="dnf"
+if ! command -v dnf &> /dev/null; then
+    PKG_MGR="yum"
+fi
+
+if [[ "{{ .chezmoi.osRelease.id }}" != "fedora" ]]; then
+    sudo $PKG_MGR install -y epel-release || true
+fi
+
+sudo $PKG_MGR install -y https://ftp.postgresql.org/pub/pgadmin/pgadmin4/yum/pgadmin4-redhat-repo-2-1.noarch.rpm
+sudo $PKG_MGR makecache
+sudo $PKG_MGR install -y pgadmin4-web
+
+{{ else -}}
+echo "=== Неподдерживаемый дистрибутив: {{ .chezmoi.osRelease.id }} ==="
+exit 1
+{{ end -}}
+
+# ------------------------------------------------------------------------------
+# Первичная настройка веб-интерфейса pgAdmin 4
+# ------------------------------------------------------------------------------
+
+PGADMIN_EMAIL="{{ .pgadmin.email | default .email }}"
+PGADMIN_PASSWORD="{{ .pgadmin.password | default "ChangeMeNow123!" }}"
+
+# Путь к скрипту инициализации в зависимости от дистрибутива
+SETUP_SCRIPT=""
+if [ -f "/usr/pgadmin4/bin/setup-web.sh" ]; then
+    SETUP_SCRIPT="/usr/pgadmin4/bin/setup-web.sh"
+elif [ -f "/usr/bin/pgadmin4-setup-web" ]; then
+    SETUP_SCRIPT="/usr/bin/pgadmin4-setup-web"
+elif command -v setup-web.sh &> /dev/null; then
+    SETUP_SCRIPT="$(command -v setup-web.sh)"
+fi
+
+if [ -n "$SETUP_SCRIPT" ]; then
+    echo "=== Настройка сервиса pgAdmin 4 Web ($SETUP_SCRIPT) ==="
+    sudo "$SETUP_SCRIPT" --initial-db --email "$PGADMIN_EMAIL" --password "$PGADMIN_PASSWORD"
+else
+    echo "=== Предупреждение: Скрипт инициализации setup-web не найден ==="
+fi
+
+echo "=== pgAdmin 4 успешно установлен и настроен ==="
+{{ end -}}
